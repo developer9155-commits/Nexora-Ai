@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard — Nexora AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    :root {
+      --bg: #050505;
+      --s1: #0d0d0d;
+      --s2: #161616;
+      --s3: #1f1f1f;
+      --ln: rgba(255,255,255,0.11);
+      --ln2: rgba(255,255,255,0.22);
+      --tx: #f4f4f4;
+      --mu: #a3a3a3;
+      --green: #7ef0a3;
+      --amber: #ffd166;
+      --red: #ff7e7e;
+      --blue: #9ec5ff;
+      --shadow: 0 20px 60px rgba(0,0,0,0.35);
+      --head: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+      --body: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: var(--body);
+      background: var(--bg);
+      color: var(--tx);
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+    }
+
+    .sidebar {
+      background: rgba(10,10,10,0.96);
+      border-right: 1px solid var(--ln);
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--head);
+      font-size: 16px;
+      font-weight: 700;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--ln);
+    }
+
+    .brand-box {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      border: 1px solid var(--ln2);
+      background: rgba(255,255,255,0.02);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav button {
+      width: 100%;
+      background: transparent;
+      color: var(--mu);
+      border: 1px solid transparent;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      transition: 0.2s ease;
+    }
+
+    .nav button:hover,
+    .nav button.active {
+      color: var(--tx);
+      background: rgba(255,255,255,0.04);
+      border-color: var(--ln);
+    }
+
+    .side-card {
+      margin-top: auto;
+      border: 1px solid var(--ln);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .side-card .label {
+      color: var(--mu);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .side-card strong {
+      display: block;
+      font-size: 28px;
+      font-family: var(--head);
+      letter-spacing: -0.04em;
+      margin-bottom: 5px;
+    }
+
+    .main {
+      padding: 28px;
+      overflow: auto;
+    }
+
+    .panel {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border: 1px solid var(--ln);
+      background: rgba(255,255,255,0.02);
+      border-radius: 20px;
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-family: var(--head);
+      font-size: clamp(28px, 3vw, 40px);
+      letter-spacing: -0.05em;
+    }
+
+    .topbar p {
+      margin: 6px 0 0;
+      color: var(--mu);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.02);
+      color: var(--tx);
+      border: 1px solid var(--ln2);
+      font-weight: 600;
+      font-size: 12.5px;
+    }
+
+    .btn.primary {
+      background: #fff;
+      color: #050505;
+      border-color: #fff;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      position: relative;
+      border: 1px solid var(--ln);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      padding: 18px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat small {
+      display: block;
+      color: var(--mu);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .stat strong {
+      display: block;
+      font-family: var(--head);
+      font-size: clamp(26px, 2vw, 32px);
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .stat span {
+      color: var(--mu);
+      font-size: 12px;
+    }
+
+    .trend {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      border: 1px solid rgba(126,240,163,0.25);
+      background: rgba(126,240,163,0.08);
+      color: var(--green);
+      font-size: 10px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--ln);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.02);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-family: var(--head);
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border: 1px solid var(--ln2);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.02);
+      color: var(--mu);
+      font-size: 11px;
+    }
+
+    .activity-list, .sites-list, .usage-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-item, .site-item, .usage-item {
+      border-bottom: 1px solid var(--ln);
+      padding: 12px 0;
+    }
+
+    .activity-item:last-child, .site-item:last-child, .usage-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .activity-row, .usage-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+      border: 1px solid var(--ln2);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .user strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .meta, .time, .user span {
+      color: var(--mu);
+      font-size: 12px;
+    }
+
+    .chip {
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(126,240,163,0.25);
+      background: rgba(126,240,163,0.08);
+      color: var(--green);
+    }
+
+    .chip.warning {
+      border-color: rgba(255,209,102,0.25);
+      background: rgba(255,209,102,0.08);
+      color: var(--amber);
+    }
+
+    .chip.danger {
+      border-color: rgba(255,126,126,0.25);
+      background: rgba(255,126,126,0.08);
+      color: var(--red);
+    }
+
+    .usage-item {
+      display: grid;
+      gap: 8px;
+    }
+
+    .progress {
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--ln);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #d9d9d9, #ffffff);
+    }
+
+    .sites-list .site-item {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr 0.8fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .site-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .site-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 10px;
+      border: 1px solid var(--ln2);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      color: var(--tx);
+      font-size: 11.5px;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--mu);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid var(--ln2);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      color: var(--tx);
+      padding: 12px 13px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: #fff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+    }
+
+    .config-actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--ln); }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 740px) {
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .config-grid { grid-template-columns: 1fr; }
+      .sites-list .site-item { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 520px) {
+      .stats { grid-template-columns: 1fr; }
+      .main { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-box">N</div>
+        <span>Nexora AI</span>
+      </div>
+
+      <nav class="nav" aria-label="Admin main menu">
+        <button class="active nav-btn" data-target="overviewSection" type="button">Overview</button>
+        <button class="nav-btn" data-target="activitySection" type="button">Users</button>
+        <button class="nav-btn" data-target="usageSection" type="button">AI Usage</button>
+        <button class="nav-btn" data-target="sitesSection" type="button">Hosting</button>
+        <button class="nav-btn" data-target="configSection" type="button">Config</button>
+      </nav>
+
+      <div class="side-card">
+        <span class="label">System health</span>
+        <strong>98.4%</strong>
+        <div style="color: var(--mu); font-size: 12px;">All services online</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="panel">
+        <header class="topbar" id="overviewSection">
+          <div>
+            <h1>Admin Dashboard</h1>
+            <p>Manage users, AI usage, live projects, and Firebase configuration.</p>
+          </div>
+          <div class="top-actions">
+            <button class="btn" type="button" id="logoutBtn">Logout</button>
+            <button class="btn primary" type="button" id="syncConfigBtn">Sync config</button>
+          </div>
+        </header>
+
+        <section class="stats">
+          <article class="stat">
+            <small>Total users</small>
+            <strong id="totalUsers">0</strong>
+            <span>+12% from last week</span>
+            <span class="trend">Live</span>
+          </article>
+          <article class="stat">
+            <small>AI requests</small>
+            <strong id="aiRequests">0</strong>
+            <span>Across all active projects</span>
+            <span class="trend">+8%</span>
+          </article>
+          <article class="stat">
+            <small>Hosted sites</small>
+            <strong id="hostedSites">0</strong>
+            <span>Live deployments</span>
+            <span class="trend">OK</span>
+          </article>
+          <article class="stat">
+            <small>Monthly revenue</small>
+            <strong id="revenue">$0</strong>
+            <span>Estimated value</span>
+            <span class="trend">+6%</span>
+          </article>
+        </section>
+
+        <section class="grid">
+          <article class="card" id="activitySection">
+            <div class="card-header">
+              <h2>Recent user activity</h2>
+              <span class="pill">Live feed</span>
+            </div>
+            <div class="activity-list" id="activityList"></div>
+          </article>
+
+          <article class="card" id="usageSection">
+            <div class="card-header">
+              <h2>AI Usage</h2>
+              <span class="pill">This month</span>
+            </div>
+            <div class="usage-list" id="usageList"></div>
+          </article>
+        </section>
+
+        <section class="grid">
+          <article class="card" id="sitesSection">
+            <div class="card-header">
+              <h2>Hosted websites</h2>
+              <span class="pill">Production</span>
+            </div>
+            <div class="sites-list" id="sitesList"></div>
+          </article>
+
+          <article class="card" id="configSection">
+            <div class="card-header">
+              <h2>Firebase config</h2>
+              <span class="pill">Secure</span>
+            </div>
+            <div style="color: var(--mu); font-size: 12px; margin-bottom: 12px;">Use your Firebase project credentials here and save them locally.</div>
+            <form id="firebaseForm">
+              <div class="config-grid">
+                <div class="field">
+                  <label for="apiKey">apiKey</label>
+                  <input id="apiKey" name="apiKey" type="text" />
+                </div>
+                <div class="field">
+                  <label for="authDomain">authDomain</label>
+                  <input id="authDomain" name="authDomain" type="text" />
+                </div>
+                <div class="field">
+                  <label for="projectId">projectId</label>
+                  <input id="projectId" name="projectId" type="text" />
+                </div>
+                <div class="field">
+                  <label for="appId">appId</label>
+                  <input id="appId" name="appId" type="text" />
+                </div>
+                <div class="field">
+                  <label for="storageBucket">storageBucket</label>
+                  <input id="storageBucket" name="storageBucket" type="text" />
+                </div>
+                <div class="field">
+                  <label for="messagingSenderId">messagingSenderId</label>
+                  <input id="messagingSenderId" name="messagingSenderId" type="text" />
+                </div>
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label for="measurementId">measurementId</label>
+                  <input id="measurementId" name="measurementId" type="text" />
+                </div>
+              </div>
+
+              <div class="config-actions">
+                <button class="btn" type="button" id="resetConfig">Reset</button>
+                <button class="btn primary" type="submit">Save config</button>
+              </div>
+            </form>
+          </article>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = 'developer8709@gmail.com';
+    const sessionKey = 'nx_session';
+    const projectListKey = 'nx_projects';
+    const defaultConfig = {
+      apiKey: '',
+      authDomain: '',
+      projectId: '',
+      appId: '',
+      storageBucket: '',
+      messagingSenderId: '',
+      measurementId: ''
+    };
+
+    const storageKey = 'nexora_admin_firebase_config';
+
+    function readProjects() {
+      try {
+        const list = JSON.parse(localStorage.getItem(projectListKey) || '[]');
+        const current = JSON.parse(localStorage.getItem('nx_project') || 'null');
+        const items = Array.isArray(list) ? list.filter(Boolean) : [];
+        if (current && current.id) {
+          const exists = items.some((item) => item && item.id === current.id);
+          if (!exists) items.unshift(current);
+        }
+        return items;
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function readSession() {
+      try {
+        return JSON.parse(localStorage.getItem(sessionKey) || 'null');
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function formatTimeAgo(timestamp) {
+      if (!timestamp) return 'Just now';
+      const diff = Math.max(0, Date.now() - Number(timestamp));
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes} min ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} hr ago`;
+      const days = Math.floor(hours / 24);
+      return `${days} day${days === 1 ? '' : 's'} ago`;
+    }
+
+    function getProjectSummary() {
+      const projects = readProjects();
+      const session = readSession();
+      const activity = [];
+
+      projects.forEach((project, index) => {
+        const ownerName = session?.name || session?.email || 'Project owner';
+        const ownerEmail = session?.email || 'owner@project.local';
+        const projectName = project.name || `Project ${index + 1}`;
+        const promptText = project.prompt ? String(project.prompt).slice(0, 52) : 'Generated website';
+        activity.push({
+          name: ownerName,
+          email: ownerEmail,
+          action: `${projectName} • ${promptText}`,
+          time: formatTimeAgo(project.updatedAt || Date.now()),
+          status: project.files ? 'success' : 'warning'
+        });
+      });
+
+      if (!activity.length) {
+        const adminUser = session || { name: 'Admin', email: 'developer8709@gmail.com' };
+        activity.push({
+          name: adminUser.name || 'Admin',
+          email: adminUser.email || 'developer8709@gmail.com',
+          action: 'No websites generated yet',
+          time: 'Just now',
+          status: 'warning'
+        });
+      }
+
+      return activity;
+    }
+
+    function buildUsage() {
+      const projects = readProjects();
+      return [
+        { name: 'Project generation', value: Math.min(100, Math.max(18, 65 + projects.length * 7)) },
+        { name: 'Design improvements', value: Math.min(100, Math.max(20, 55 + projects.length * 5)) },
+        { name: 'Content rewriting', value: Math.min(100, Math.max(25, 70 + projects.length * 6)) },
+        { name: 'Image generation', value: Math.min(100, Math.max(12, 40 + projects.length * 8)) }
+      ].map((item) => ({ ...item, value: Math.round(item.value) }));
+    }
+
+    function buildSites() {
+      const projects = readProjects();
+      const session = readSession();
+      const ownerName = session?.name || 'Current user';
+
+      if (!projects.length) {
+        return [{
+          name: 'No live websites yet',
+          owner: ownerName,
+          status: 'Draft',
+          uptime: '—',
+          domain: 'No deployment',
+          href: 'builder.html'
+        }];
+      }
+
+      return projects.map((project, index) => ({
+        id: project.id || `project-${index + 1}`,
+        name: project.name || `Project ${index + 1}`,
+        owner: ownerName,
+        status: project.files ? 'Live' : 'Draft',
+        uptime: project.files ? '99.8%' : '—',
+        domain: project.files ? 'Production' : 'Draft',
+        href: `host.html?project=${encodeURIComponent(project.id || `project-${index + 1}`)}`
+      }));
+    }
+
+    function renderActivity() {
+      const container = document.getElementById('activityList');
+      const activity = getProjectSummary();
+      container.innerHTML = activity.map((item) => `
+        <div class="activity-item">
+          <div class="activity-row">
+            <div class="user">
+              <div class="avatar">${(item.name || 'A').split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</div>
+              <div>
+                <strong>${item.name}</strong>
+                <span>${item.email}</span>
+              </div>
+            </div>
+            <span class="chip ${item.status === 'warning' ? 'warning' : item.status === 'danger' ? 'danger' : ''}">${item.status === 'success' ? 'Live' : item.status === 'danger' ? 'Risk' : 'Queued'}</span>
+          </div>
+          <div class="activity-row" style="margin-top: 6px;">
+            <div class="meta">${item.action}</div>
+            <div class="time">${item.time}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderUsage() {
+      const container = document.getElementById('usageList');
+      const usage = buildUsage();
+      container.innerHTML = usage.map((item) => `
+        <div class="usage-item">
+          <div class="usage-head">
+            <strong>${item.name}</strong>
+            <span class="meta">${item.value}%</span>
+          </div>
+          <div class="progress"><span style="width:${item.value}%"></span></div>
+        </div>
+      `).join('');
+    }
+
+    function renderSites() {
+      const container = document.getElementById('sitesList');
+      const sites = buildSites();
+      container.innerHTML = sites.map((site) => `
+        <div class="site-item">
+          <div>
+            <div class="site-name">${site.name}</div>
+            <div class="site-meta" style="color: var(--mu); font-size: 12px;">Owner: ${site.owner} • ${site.domain}</div>
+          </div>
+          <div>
+            <div style="color: var(--mu); font-size: 12px;">Uptime</div>
+            <strong>${site.uptime}</strong>
+          </div>
+          <div>
+            <span class="chip ${site.status === 'Live' ? '' : site.status === 'Review' ? 'warning' : 'danger'}">${site.status}</span>
+          </div>
+          <a class="site-link" href="${site.href}" target="_blank" rel="noreferrer">Open</a>
+        </div>
+      `).join('');
+    }
+
+    function fillFirebaseForm(config = defaultConfig) {
+      Object.entries(config).forEach(([key, value]) => {
+        const input = document.getElementById(key);
+        if (input) input.value = value || '';
+      });
+    }
+
+    function getSavedConfig() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        return raw ? { ...defaultConfig, ...JSON.parse(raw) } : defaultConfig;
+      } catch (error) {
+        return defaultConfig;
+      }
+    }
+
+    function persistConfig(config) {
+      const nextConfig = { ...defaultConfig, ...config };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextConfig));
+      } catch (error) {
+        console.warn('Unable to persist Firebase config.', error);
+      }
+      window.FIREBASE_CONFIG = nextConfig;
+    }
+
+    function hydrateStats() {
+      const totalUsers = document.getElementById('totalUsers');
+      const aiRequests = document.getElementById('aiRequests');
+      const hostedSitesCount = document.getElementById('hostedSites');
+      const revenue = document.getElementById('revenue');
+      const projects = readProjects();
+      const siteCount = projects.filter((project) => project.files).length || 0;
+      const requestTotal = projects.reduce((sum, project) => sum + (Array.isArray(project.messages) ? project.messages.length : 0), 0);
+
+      totalUsers.textContent = String(Math.max(1, projects.length + 1));
+      aiRequests.textContent = requestTotal ? requestTotal.toLocaleString() : '0';
+      hostedSitesCount.textContent = String(siteCount || projects.length || 0);
+      revenue.textContent = `$${Math.max(0, (siteCount || projects.length || 0) * 24 + (requestTotal || 0) * 0.08).toFixed(1).replace(/\.0$/, '')}k`;
+    }
+
+    function bindButtons() {
+      document.querySelectorAll('.nav-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          const target = document.getElementById(button.dataset.target);
+          document.querySelectorAll('.nav-btn').forEach((item) => item.classList.toggle('active', item === button));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem(sessionKey);
+        window.location.href = 'login.html';
+      });
+
+      document.getElementById('syncConfigBtn').addEventListener('click', () => {
+        const nextConfig = window.FIREBASE_CONFIG || getSavedConfig();
+        persistConfig(nextConfig);
+        fillFirebaseForm(nextConfig);
+        alert('Firebase config synced successfully.');
+      });
+
+      document.getElementById('firebaseForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const config = Object.fromEntries(formData.entries());
+        persistConfig(config);
+        alert('Firebase config saved successfully.');
+      });
+
+      document.getElementById('resetConfig').addEventListener('click', () => {
+        const resetConfig = { ...defaultConfig };
+        fillFirebaseForm(resetConfig);
+        persistConfig(resetConfig);
+      });
+    }
+
+    function isAdminSession() {
+      try {
+        const session = JSON.parse(localStorage.getItem(sessionKey) || '{}');
+        return String(session.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase() || session.role === 'admin';
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function checkAccess() {
+      if (!isAdminSession()) {
+        window.location.href = 'login.html?next=admin.html';
+      }
+    }
+
+    checkAccess();
+    bindButtons();
+    renderActivity();
+    renderUsage();
+    renderSites();
+    hydrateStats();
+    fillFirebaseForm(getSavedConfig());
+  </script>
+</body>
+</html>

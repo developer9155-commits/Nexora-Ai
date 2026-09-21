@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>try{if(JSON.parse(localStorage.getItem('nx_session')||'null')?.provider!=='firebase')location.replace('login.html?next=manage.html')}catch(error){location.replace('login.html?next=manage.html')}</script>
+  <title>Admin Panel — Nexora AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050505;
+      --s1: #0d0d0d;
+      --s2: #141414;
+      --s3: #1d1d1d;
+      --ln: rgba(255,255,255,0.11);
+      --ln2: rgba(255,255,255,0.22);
+      --tx: #f4f4f4;
+      --mu: #a3a3a3;
+      --muted-2: #707070;
+      --head: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+      --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+      --green: #7ef0a3;
+      --amber: #ffd166;
+      --red: #ff7e7e;
+      --blue: #9ec5ff;
+      --shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+    html,body { margin: 0; min-height: 100%; }
+    body {
+      font-family: var(--body);
+      background: var(--bg);
+      color: var(--tx);
+      display: flex;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: rgba(10,10,10,0.96);
+      border-right: 1px solid var(--ln);
+      display: flex;
+      flex-direction: column;
+      padding: 18px 16px;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--head);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      padding: 8px 8px 14px;
+      border-bottom: 1px solid var(--ln);
+    }
+
+    .brand-mark {
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--ln2);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.02);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--mu);
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      transition: 0.2s ease;
+    }
+
+    .nav-btn.active,
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--ln);
+      color: var(--tx);
+    }
+
+    .side-card {
+      margin-top: auto;
+      border: 1px solid var(--ln);
+      border-radius: 16px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    }
+
+    .side-card .label {
+      display: inline-block;
+      color: var(--mu);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 8px;
+    }
+
+    .side-card strong {
+      display: block;
+      font-size: 26px;
+      font-family: var(--head);
+      margin-bottom: 6px;
+    }
+
+    .main {
+      overflow: auto;
+      padding: 28px;
+    }
+
+    .panel {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 26px;
+      border: 1px solid var(--ln);
+      background: rgba(255,255,255,0.02);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .topbar h1 {
+      font-family: var(--head);
+      font-size: clamp(28px, 3vw, 40px);
+      letter-spacing: -0.05em;
+      margin: 0;
+    }
+
+    .topbar p {
+      margin: 6px 0 0;
+      color: var(--mu);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--ln2);
+      background: rgba(255,255,255,0.02);
+      color: var(--tx);
+      font-weight: 600;
+      font-size: 12.5px;
+      transition: 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: #fff;
+    }
+
+    .btn.primary {
+      background: #fff;
+      color: #050505;
+      border-color: #fff;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      position: relative;
+      border: 1px solid var(--ln);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border-radius: 18px;
+      padding: 20px 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat small {
+      display: block;
+      color: var(--mu);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      margin-bottom: 12px;
+    }
+
+    .stat strong {
+      display: block;
+      font-family: var(--head);
+      font-size: clamp(24px, 2vw, 32px);
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .stat span {
+      color: var(--mu);
+      font-size: 12px;
+    }
+
+    .stat .trend {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(126, 240, 163, 0.08);
+      border: 1px solid rgba(126,240,163,0.25);
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--ln);
+      background: rgba(255,255,255,0.02);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-family: var(--head);
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--ln2);
+      color: var(--mu);
+      font-size: 11px;
+      background: rgba(255,255,255,0.01);
+    }
+
+    .activity-list,
+    .sites-list,
+    .usage-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-item,
+    .site-item,
+    .usage-item {
+      display: grid;
+      gap: 8px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--ln);
+    }
+
+    .activity-item:last-child,
+    .site-item:last-child,
+    .usage-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .activity-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 11px;
+      border: 1px solid var(--ln2);
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+    }
+
+    .user strong {
+      display: block;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user span,
+    .time,
+    .meta {
+      color: var(--mu);
+      font-size: 12px;
+    }
+
+    .chip {
+      border: 1px solid rgba(126,240,163,0.25);
+      background: rgba(126,240,163,0.08);
+      color: var(--green);
+      font-size: 10px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chip.warning {
+      border-color: rgba(255,209,102,0.3);
+      background: rgba(255,209,102,0.08);
+      color: var(--amber);
+    }
+
+    .chip.danger {
+      border-color: rgba(255,126,126,0.25);
+      background: rgba(255,126,126,0.08);
+      color: var(--red);
+    }
+
+    .usage-item {
+      gap: 10px;
+    }
+
+    .usage-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--ln);
+      overflow: hidden;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #d9d9d9, #ffffff);
+    }
+
+    .sites-list .site-item {
+      grid-template-columns: 1.4fr 0.8fr 0.8fr auto;
+      align-items: center;
+    }
+
+    .site-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .site-meta {
+      color: var(--mu);
+      font-size: 12px;
+    }
+
+    .site-status {
+      justify-self: start;
+    }
+
+    .site-link {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--ln2);
+      color: var(--tx);
+      background: rgba(255,255,255,0.02);
+      font-size: 11.5px;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: var(--mu);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .field input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--ln2);
+      background: rgba(255,255,255,0.02);
+      color: var(--tx);
+      padding: 12px 13px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: #fff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+    }
+
+    .config-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .subtle {
+      color: var(--mu);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--ln); }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .main { padding: 18px; }
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .config-grid { grid-template-columns: 1fr; }
+      .sites-list .site-item { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 520px) {
+      .stats { grid-template-columns: 1fr; }
+      .activity-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">N</div>
+        <span>Nexora AI</span>
+      </div>
+
+      <nav class="nav" aria-label="Admin sections">
+        <button class="nav-btn active" type="button">Overview</button>
+        <button class="nav-btn" type="button">User Activity</button>
+        <button class="nav-btn" type="button">AI Usage</button>
+        <button class="nav-btn" type="button">Hosted Sites</button>
+        <button class="nav-btn" type="button">Firebase Config</button>
+      </nav>
+
+      <div class="side-card">
+        <span class="label">System health</span>
+        <strong>98.4%</strong>
+        <div class="subtle">All services online • 24 min ago</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="panel">
+        <header class="topbar">
+          <div>
+            <h1>Admin Panel</h1>
+            <p>Monitor activity, AI usage, hosting, and project configuration.</p>
+          </div>
+          <div class="top-actions">
+            <button class="btn" type="button">Export report</button>
+            <button class="btn primary" type="button">Sync settings</button>
+          </div>
+        </header>
+
+        <section class="stats" aria-label="Overview stats">
+          <article class="stat">
+            <small>Total users</small>
+            <strong id="totalUsers">0</strong>
+            <span>+12% from last week</span>
+            <span class="trend">Live</span>
+          </article>
+          <article class="stat">
+            <small>AI requests</small>
+            <strong id="aiRequests">0</strong>
+            <span>Across all active projects</span>
+            <span class="trend">+8%</span>
+          </article>
+          <article class="stat">
+            <small>Hosted sites</small>
+            <strong id="hostedSites">0</strong>
+            <span>Active publishes in queue</span>
+            <span class="trend">OK</span>
+          </article>
+          <article class="stat">
+            <small>Monthly revenue</small>
+            <strong id="revenue">$0</strong>
+            <span>Estimated plan values</span>
+            <span class="trend">+6%</span>
+          </article>
+        </section>
+
+        <section class="grid">
+          <article class="card">
+            <div class="card-header">
+              <h2>Recent user activity</h2>
+              <span class="pill">Live feed</span>
+            </div>
+            <div class="activity-list" id="activityList"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h2>AI Usage</h2>
+              <span class="pill">This month</span>
+            </div>
+            <div class="usage-list" id="usageList"></div>
+          </article>
+        </section>
+
+        <section class="grid">
+          <article class="card">
+            <div class="card-header">
+              <h2>Hosted websites</h2>
+              <span class="pill">Production</span>
+            </div>
+            <div class="sites-list" id="sitesList"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h2>Firebase config</h2>
+              <span class="pill">Secure</span>
+            </div>
+            <div class="subtle">Update the project credentials used by the app and save them to browser storage.</div>
+            <form id="firebaseForm">
+              <div class="config-grid">
+                <div class="field">
+                  <label for="apiKey">apiKey</label>
+                  <input id="apiKey" name="apiKey" type="text" />
+                </div>
+                <div class="field">
+                  <label for="authDomain">authDomain</label>
+                  <input id="authDomain" name="authDomain" type="text" />
+                </div>
+                <div class="field">
+                  <label for="projectId">projectId</label>
+                  <input id="projectId" name="projectId" type="text" />
+                </div>
+                <div class="field">
+                  <label for="appId">appId</label>
+                  <input id="appId" name="appId" type="text" />
+                </div>
+                <div class="field">
+                  <label for="storageBucket">storageBucket</label>
+                  <input id="storageBucket" name="storageBucket" type="text" />
+                </div>
+                <div class="field">
+                  <label for="messagingSenderId">messagingSenderId</label>
+                  <input id="messagingSenderId" name="messagingSenderId" type="text" />
+                </div>
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label for="measurementId">measurementId</label>
+                  <input id="measurementId" name="measurementId" type="text" />
+                </div>
+              </div>
+              <div class="config-actions">
+                <button class="btn" type="button" id="resetConfig">Reset</button>
+                <button class="btn primary" type="submit">Save config</button>
+              </div>
+            </form>
+          </article>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const defaultConfig = {
+      apiKey: '',
+      authDomain: '',
+      projectId: '',
+      appId: '',
+      storageBucket: '',
+      messagingSenderId: '',
+      measurementId: ''
+    };
+
+    const activity = [
+      { name: 'Aisha Patel', email: 'aisha@,studio.com', action: 'Generated 3 landing pages', time: '2 min ago', status: 'success' },
+      { name: 'Marcus Lee', email: 'marcus@labs.dev', action: 'Published restaurant site', time: '12 min ago', status: 'warning' },
+      { name: 'Tina Gomez', email: 'tina@poppy.ai', action: 'Used AI generator 24 times', time: '32 min ago', status: 'success' },
+      { name: 'Darius Shaw', email: 'darius@cloud.io', action: 'Updated Firebase settings', time: '48 min ago', status: 'warning' },
+      { name: 'Sana Khan', email: 'sana@launch.io', action: 'Removed inactive site draft', time: '1 hr ago', status: 'danger' }
+    ];
+
+    const usage = [
+      { name: 'Project generation', value: 82 },
+      { name: 'Design improvements', value: 68 },
+      { name: 'Content rewriting', value: 91 },
+      { name: 'Image generation', value: 54 }
+    ];
+
+    const sites = [
+      { name: 'nexora-studio.com', owner: 'Aisha Patel', status: 'Live', uptime: '99.9%', domain: 'Production' },
+      { name: 'menu-launch.co', owner: 'Marcus Lee', status: 'Review', uptime: '96.4%', domain: 'Staging' },
+      { name: 'tina-portfolio.ai', owner: 'Tina Gomez', status: 'Live', uptime: '99.8%', domain: 'Production' },
+      { name: 'cloud-saas.app', owner: 'Darius Shaw', status: 'Paused', uptime: '92.1%', domain: 'Maintenance' }
+    ];
+
+    const storageKey = 'nexora_admin_firebase_config';
+
+    const renderActivity = () => {
+      const container = document.getElementById('activityList');
+      container.innerHTML = activity.map(item => `
+        <div class="activity-item">
+          <div class="activity-row">
+            <div class="user">
+              <div class="avatar">${item.name.split(' ').map(x => x[0]).slice(0,2).join('').toUpperCase()}</div>
+              <div>
+                <strong>${item.name}</strong>
+                <span>${item.email}</span>
+              </div>
+            </div>
+            <span class="chip ${item.status === 'warning' ? 'warning' : item.status === 'danger' ? 'danger' : ''}">${item.status}</span>
+          </div>
+          <div class="activity-row">
+            <div class="meta">${item.action}</div>
+            <div class="time">${item.time}</div>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    const renderUsage = () => {
+      const container = document.getElementById('usageList');
+      container.innerHTML = usage.map(item => `
+        <div class="usage-item">
+          <div class="usage-head">
+            <strong>${item.name}</strong>
+            <span class="meta">${item.value}%</span>
+          </div>
+          <div class="progress"><span style="width:${item.value}%"></span></div>
+        </div>
+      `).join('');
+    };
+
+    const renderSites = () => {
+      const container = document.getElementById('sitesList');
+      container.innerHTML = sites.map(site => `
+        <div class="site-item">
+          <div>
+            <div class="site-name">${site.name}</div>
+            <div class="site-meta">Owner: ${site.owner} • ${site.domain}</div>
+          </div>
+          <div>
+            <div class="site-meta">Uptime</div>
+            <strong>${site.uptime}</strong>
+          </div>
+          <div class="site-status">
+            <span class="chip ${site.status === 'Live' ? '' : site.status === 'Review' ? 'warning' : 'danger'}">${site.status}</span>
+          </div>
+          <a class="site-link" href="host.html?project=${encodeURIComponent(site.id || '')}" target="_blank" rel="noreferrer">Open</a>
+        </div>
+      `).join('');
+    };
+
+    const fillConfigForm = (config = defaultConfig) => {
+      Object.entries(config).forEach(([key, value]) => {
+        const input = document.getElementById(key);
+        if (input) input.value = value || '';
+      });
+    };
+
+    const getSavedConfig = () => {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        return raw ? JSON.parse(raw) : defaultConfig;
+      } catch (error) {
+        return defaultConfig;
+      }
+    };
+
+    const persistConfig = (config) => {
+      const safe = { ...defaultConfig, ...config };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(safe));
+      } catch (error) {
+        console.warn('Unable to save Firebase config locally.', error);
+      }
+      window.FIREBASE_CONFIG = safe;
+    };
+
+    const hydrateStats = () => {
+      const totalUsers = document.getElementById('totalUsers');
+      const aiRequests = document.getElementById('aiRequests');
+      const hostedSitesCount = document.getElementById('hostedSites');
+      const revenue = document.getElementById('revenue');
+
+      totalUsers.textContent = '1,284';
+      aiRequests.textContent = '48,320';
+      hostedSitesCount.textContent = String(sites.length + 6);
+      revenue.textContent = '$24.8k';
+    };
+
+    document.getElementById('firebaseForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const config = Object.fromEntries(formData.entries());
+      persistConfig(config);
+      alert('Firebase config saved locally for this browser session.');
+    });
+
+    document.getElementById('resetConfig').addEventListener('click', () => {
+      fillConfigForm(defaultConfig);
+      persistConfig(defaultConfig);
+    });
+
+    renderActivity();
+    renderUsage();
+    renderSites();
+    hydrateStats();
+    fillConfigForm(getSavedConfig());
+  </script>
+</body>
+</html>
