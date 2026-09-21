@@ -1,1967 +1,317 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1"
->
-
-<title>Hosted Website</title>
-
-
-<!-- =======================================================
-     PUBLIC HOST DETECTION
-     ======================================================= -->
-
-<script>
-
-(function(){
-
-  const params =
-    new URLSearchParams(location.search);
-
-  if(params.get('site')){
-
-    document.documentElement.classList.add(
-      'public-hosted'
-    );
-
-  }
-
-})();
-
-</script>
-
-
-<!-- =======================================================
-     LOGIN CHECK
-     Public hosted websites do NOT require login.
-     ======================================================= -->
-
-<script>
-
-(function(){
-
-  const params =
-    new URLSearchParams(location.search);
-
-  if(
-    params.get('site') ||
-    params.get('project')
-  ){
-
-    return;
-
-  }
-
-  try{
-
-    const session =
-      JSON.parse(
-        localStorage.getItem('nx_session')
-      );
-
-    if(
-      session?.provider !== 'firebase'
-    ){
-
-      location.replace(
-        'login.html?next=host.html'
-      );
-
-    }
-
-  }catch{
-
-    location.replace(
-      'login.html?next=host.html'
-    );
-
-  }
-
-})();
-
-</script>
-
-
-<!-- =======================================================
-     FIREBASE
-     ======================================================= -->
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<script src="firebase-config.js"></script>
-
-
-<!-- =======================================================
-     FONTS
-     ======================================================= -->
-
-<link
-  href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400;500;600&display=swap"
-  rel="stylesheet"
->
-
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexora AI — Build extraordinary websites with AI</title>
+<meta name="description" content="Describe your vision. Generate a website. Customize every detail. Publish your creation. Free to use, no subscription.">
+<meta name="theme-color" content="#050505">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-
-/* =========================================================
-   NEXORA HOST UI
-   ========================================================= */
-
-:root{
-
-  --bg:#050505;
-  --s1:#0d0d0d;
-  --s2:#161616;
-
-  --ln:rgba(255,255,255,.11);
-  --ln2:rgba(255,255,255,.24);
-
-  --tx:#f4f4f4;
-  --mu:#9b9b9b;
-
-  --head:
-    'Bricolage Grotesque',
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-
-  --body:
-    'Hanken Grotesk',
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-
-}
-
-
-*{
-
-  box-sizing:border-box;
-
-  margin:0;
-  padding:0;
-
-}
-
-
-html,
-body{
-
-  height:100%;
-
-}
-
-
-body{
-
-  background:var(--bg);
-
-  color:var(--tx);
-
-  font:
-    13.5px/1.55
-    var(--body);
-
-  font-variant-caps:small-caps;
-
-  letter-spacing:.02em;
-
-  display:flex;
-
-  flex-direction:column;
-
-  overflow:hidden;
-
-}
-
-
-button,
-a{
-
-  font:inherit;
-  color:inherit;
-
-}
-
-
-a{
-
-  text-decoration:none;
-
-}
-
-
-button{
-
-  border:0;
-  background:none;
-  cursor:pointer;
-
-}
-
-
-/* =========================================================
-   NEXORA HEADER
-   ========================================================= */
-
-.top{
-
-  height:52px;
-
-  flex:none;
-
-  display:flex;
-
-  align-items:center;
-
-  gap:10px;
-
-  padding:0 14px;
-
-  border-bottom:
-    1px solid var(--ln);
-
-  background:var(--s1);
-
-}
-
-
-.logo{
-
-  display:flex;
-
-  align-items:center;
-
-  gap:8px;
-
-  font:
-    700 15px var(--head);
-
-  letter-spacing:0;
-
-}
-
-
-.logo svg{
-
-  width:22px;
-  height:22px;
-
-  fill:none;
-
-  stroke:currentColor;
-
-  stroke-width:1.5;
-
-}
-
-
-.name{
-
-  max-width:42vw;
-
-  color:var(--mu);
-
-  font-weight:600;
-
-  white-space:nowrap;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-}
-
-
-.sp{
-
-  flex:1;
-
-}
-
-
-.mut{
-
-  color:var(--mu);
-
-  font-size:12px;
-
-}
-
-
-.btn{
-
-  display:inline-flex;
-
-  align-items:center;
-
-  gap:7px;
-
-  padding:6px 13px;
-
-  border:
-    1px solid var(--ln2);
-
-  border-radius:99px;
-
-  font-weight:600;
-
-  font-size:12px;
-
-  white-space:nowrap;
-
-}
-
-
-.btn:hover{
-
-  border-color:#fff;
-
-  background:var(--s2);
-
-}
-
-
-.solid{
-
-  background:#fff;
-
-  color:#000;
-
-  border-color:#fff;
-
-}
-
-
-/* =========================================================
-   HOST SHELL
-   ========================================================= */
-
-.shell{
-
-  flex:1;
-
-  min-height:0;
-
-  display:flex;
-
-  flex-direction:column;
-
-}
-
-
-.bar{
-
-  height:42px;
-
-  flex:none;
-
-  display:flex;
-
-  align-items:center;
-
-  gap:9px;
-
-  padding:0 14px;
-
-  border-bottom:
-    1px solid var(--ln);
-
-  background:#080808;
-
-}
-
-
-.bar .dot{
-
-  width:8px;
-  height:8px;
-
-  border-radius:50%;
-
-  background:#54d38a;
-
-}
-
-
-.viewport{
-
-  flex:1;
-
-  min-height:0;
-
-  padding:16px;
-
-  overflow:auto;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(255,255,255,.07) 1px,
-      transparent 1px
-    )
-    0 0 / 22px 22px;
-
-}
-
-
-.site{
-
-  width:100%;
-
-  min-height:100%;
-
-  border:
-    1px solid var(--ln2);
-
-  border-radius:12px;
-
-  overflow:hidden;
-
-  background:#fff;
-
-  box-shadow:
-    0 24px 60px rgba(0,0,0,.5);
-
-}
-
-
-iframe{
-
-  display:block;
-
-  width:100%;
-
-  height:100vh;
-
-  min-height:100vh;
-
-  border:0;
-
-  background:#fff;
-
-}
-
-
-.empty{
-
-  min-height:
-    calc(100vh - 126px);
-
-  display:grid;
-
-  place-items:center;
-
-  text-align:center;
-
-  padding:30px;
-
-  background:var(--s1);
-
-  color:var(--mu);
-
-}
-
-
-.empty b{
-
-  display:block;
-
-  color:#fff;
-
-  font:
-    700 20px var(--head);
-
-  margin-bottom:8px;
-
-  letter-spacing:0;
-
-}
-
-
-.empty .btn{
-
-  margin-top:16px;
-
-}
-
-
-/* =========================================================
-   PUBLIC HOSTED WEBSITE MODE
-
-   URL:
-   host.html?site=your-site
-
-   In this mode:
-   - Nexora header hidden
-   - status bar hidden
-   - preview background removed
-   - preview border removed
-   - only generated website remains
-   ========================================================= */
-
-html.public-hosted,
-html.public-hosted body{
-
-  width:100%;
-
-  min-width:100%;
-
-  height:auto;
-
-  min-height:100%;
-
-  margin:0;
-
-  padding:0;
-
-  overflow:auto;
-
-  background:#fff;
-
-}
-
-
-/* Hide Nexora header */
-
-html.public-hosted .top{
-
-  display:none !important;
-
-}
-
-
-/* Hide status bar */
-
-html.public-hosted .bar{
-
-  display:none !important;
-
-}
-
-
-/* Remove host shell */
-
-html.public-hosted .shell{
-
-  display:block;
-
-  width:100%;
-
-  height:auto;
-
-  min-height:100vh;
-
-}
-
-
-/* Remove preview padding */
-
-html.public-hosted .viewport{
-
-  display:block;
-
-  width:100%;
-
-  height:auto;
-
-  min-height:100vh;
-
-  margin:0;
-
-  padding:0;
-
-  overflow:visible;
-
-  background:#fff;
-
-}
-
-
-/* Remove preview card */
-
-html.public-hosted .site{
-
-  width:100%;
-
-  height:auto;
-
-  min-height:100vh;
-
-  margin:0;
-
-  padding:0;
-
-  border:0;
-
-  border-radius:0;
-
-  overflow:visible;
-
-  background:#fff;
-
-  box-shadow:none;
-
-}
-
-
-/* Generated website iframe */
-
-html.public-hosted iframe{
-
-  display:block;
-
-  width:100%;
-
-  height:100vh;
-
-  min-height:100vh;
-
-  margin:0;
-
-  padding:0;
-
-  border:0;
-
-  background:#fff;
-
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media(max-width:700px){
-
-  .top{
-
-    gap:7px;
-
-  }
-
-  .logo span{
-
-    display:none;
-
-  }
-
-  .name{
-
-    max-width:30vw;
-
-  }
-
-  .top .btn{
-
-    padding:6px 9px;
-
-  }
-
-  .viewport{
-
-    padding:8px;
-
-  }
-
-  .site{
-
-    border-radius:8px;
-
-  }
-
-}
-
-
-html.public-hosted .viewport{
-
-  padding:0;
-
-}
-
-
-html.public-hosted .site{
-
-  border-radius:0;
-
-}
-
+@property --gap{syntax:'<length>';inherits:true;initial-value:0px}
+:root{--bg:#050505;--s1:#0d0d0d;--s2:#161616;--ln:rgba(255,255,255,.11);--ln2:rgba(255,255,255,.24);--tx:#f4f4f4;--mu:#9b9b9b;--dim:#6b6b6b;
+--head:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;--body:'Hanken Grotesk','Helvetica Neue',Arial,sans-serif;--e:cubic-bezier(.16,1,.3,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{background:var(--bg);color:var(--tx);font:400 14px/1.6 var(--body);font-variant-caps:small-caps;letter-spacing:.02em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{display:block}.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:6px}
+::selection{background:#fff;color:#000}
+.wrap{max-width:1200px;margin:0 auto;padding:0 28px}
+h1,h2,h3{font-family:var(--head);letter-spacing:-.005em;line-height:1.08;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;font-weight:600;font-size:13px;border:1px solid var(--ln2);transition:transform .25s var(--e),background .25s,color .25s,border-color .25s}
+.btn:hover{transform:translateY(-2px);border-color:#fff}
+.btn.solid{background:#fff;color:#000;border-color:#fff}.btn.solid:hover{background:#dcdcdc}
+.btn.lg{padding:10px 20px;font-size:13.5px}.btn.sm{padding:6px 13px;font-size:12px}
+/* nav */
+.nav{position:fixed;inset:0 0 auto;z-index:50;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+.nav.on{background:rgba(5,5,5,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--ln)}
+.nav .row{display:flex;align-items:center;justify-content:space-between;height:60px;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;font:700 16px var(--head);letter-spacing:0}
+.logo svg{width:24px;height:24px}
+.links{display:flex;gap:4px}.links a{padding:6px 12px;border-radius:99px;color:var(--mu);font-size:13px;transition:color .2s,background .2s}.links a:hover{color:#fff;background:var(--s2)}
+.acts{display:flex;align-items:center;gap:10px}
+.user-badge{position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:220px}
+.user-badge.hidden{display:none}
+.user-toggle{position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border:1px solid var(--ln2);border-radius:12px;background:rgba(255,255,255,.03);color:#fff;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:all .2s ease}
+.user-toggle:hover{border-color:#fff;background:rgba(255,255,255,.06)}
+.user-avatar{display:grid;place-items:center;width:24px;height:24px;border-radius:10px;background:linear-gradient(135deg,#fff,#dfe7ff);color:#111;font-weight:800;font-size:11px;flex-shrink:0}
+.user-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-logout{position:absolute;top:calc(100% + 6px);right:0;display:none;min-width:118px;padding:8px 12px;border:1px solid var(--ln2);border-radius:12px;background:rgba(12,12,12,.98);color:var(--tx);font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,.28);transition:all .2s ease;z-index:3}
+.user-logout.visible{display:inline-flex;align-items:center;justify-content:center}
+.user-logout:hover{color:#fff;border-color:#fff;background:rgba(24,24,24,.98)}
+.login-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:200}
+.login-modal-backdrop.show{display:flex}
+.login-modal{width:min(420px,100%);background:linear-gradient(180deg,#111,#090909);border:1px solid var(--ln2);border-radius:24px;padding:26px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.5);text-align:center}
+.login-modal-icon{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;margin:0 auto 14px;background:rgba(255,255,255,.08);color:#fff;font-size:28px;font-weight:800;border:1px solid var(--ln2)}
+.login-modal h3{font:700 28px/1.1 var(--head);letter-spacing:-.04em;margin-bottom:8px}
+.login-modal p{color:var(--mu);font-size:14px;line-height:1.6;margin-bottom:20px}
+.login-modal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.burger{display:none;width:42px;height:42px;border:1px solid var(--ln2);border-radius:12px;place-items:center}
+.drawer{display:none}
+/* hero */
+.hero{position:relative;min-height:100svh;padding-top:60px;display:flex;align-items:center;overflow:hidden;
+background:radial-gradient(ellipse 60% 50% at 70% 45%,rgba(255,255,255,.08),transparent 70%)}
+.floor{position:absolute;left:-20%;right:-20%;bottom:-18%;height:62%;pointer-events:none;
+background:linear-gradient(var(--ln) 1px,transparent 1px) 0 0/56px 56px,linear-gradient(90deg,var(--ln) 1px,transparent 1px) 0 0/56px 56px;
+transform:perspective(700px) rotateX(64deg);-webkit-mask-image:linear-gradient(transparent,#000 45%,transparent);mask-image:linear-gradient(transparent,#000 45%,transparent)}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.02fr 1fr;align-items:center;gap:20px;width:100%}
+.hero h1{font-size:clamp(30px,4.2vw,56px);animation:up .9s var(--e) both}
+.hero p.sub{margin:20px 0 26px;max-width:420px;font-size:15px;color:var(--mu);animation:up .9s .12s var(--e) both}
+.cta{display:flex;flex-wrap:wrap;gap:12px;animation:up .9s .22s var(--e) both}
+.trust{display:flex;flex-wrap:wrap;margin-top:24px;font-size:12.5px;color:var(--dim);animation:up .9s .32s var(--e) both}
+.trust span{padding-right:16px;margin-right:16px;border-right:1px solid var(--ln)}.trust span:last-child{border:0;margin:0;padding:0}
+@keyframes up{from{opacity:0;transform:translateY(24px)}}
+/* 3D scene */
+.stage{position:relative;height:600px;perspective:1500px;touch-action:pan-y}
+.float{position:absolute;inset:0;transform-style:preserve-3d;animation:bob 7s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-14px)}}
+.rig{--gap:66px;position:absolute;left:50%;top:50%;width:340px;height:214px;margin:-107px 0 0 -170px;transform-style:preserve-3d;
+transform:rotateX(calc(57deg + var(--py,0deg))) rotateZ(calc(-38deg + var(--px,0deg)));transition:--gap .7s var(--e);animation:drop 1.8s .1s var(--e) backwards}
+.stage:hover .rig,.stage:focus-within .rig{--gap:104px}
+@keyframes drop{from{--gap:0px;opacity:0}}
+.layer{position:absolute;inset:0;border:1px solid var(--ln2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:9px;
+background:linear-gradient(135deg,rgba(38,38,38,.92),rgba(14,14,14,.94));box-shadow:0 30px 60px rgba(0,0,0,.6);transform:translateZ(calc(var(--i)*var(--gap)))}
+.layer.glow{background:radial-gradient(circle,rgba(255,255,255,.2),transparent 65%);border:0;box-shadow:none;transform:translateZ(-50px) scale(1.5)}
+.tag{position:absolute;right:14px;bottom:10px;font-size:10.5px;color:var(--dim);font-weight:500}
+.b{height:8px;border-radius:5px;background:rgba(255,255,255,.26)}.k{background:rgba(255,255,255,.13);border-radius:7px}.pill{height:20px;width:74px;border-radius:99px;background:#fff}
+.row2{display:flex;align-items:center;gap:8px}.grow{flex:1}
+.g6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;flex:1;padding-top:6px}
+/* sections */
+section{padding:88px 0}
+.head{max-width:560px;margin-bottom:40px}.head h2{font-size:clamp(24px,3vw,38px)}.head p{margin-top:12px;color:var(--mu);font-size:14.5px}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{position:relative;padding:22px;border:1px solid var(--ln);border-radius:22px;background:linear-gradient(160deg,var(--s2),var(--s1));overflow:hidden;transition:transform .25s var(--e),border-color .25s;will-change:transform}
+.card::before{content:'';position:absolute;inset:0;background:radial-gradient(320px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.09),transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none}
+.card:hover{border-color:var(--ln2)}.card:hover::before{opacity:1}
+.card .ic{width:22px;height:22px;margin-bottom:34px}
+.card h3{font-size:17px;margin-bottom:8px}.card p{color:var(--mu);font-size:13.5px}
+.card.wide{grid-column:span 2}.card.wide p{max-width:420px}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--ln)}
+.step{padding:34px 34px 10px 0}.step+.step{padding-left:28px;border-left:1px solid var(--ln)}
+.step b{font:700 48px/1 var(--head);letter-spacing:0;color:transparent;-webkit-text-stroke:1px var(--ln2);display:block;margin-bottom:26px}
+.step h3{font-size:18px;margin-bottom:8px}.step p{color:var(--mu)}
+/* templates */
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.tpl{padding:14px;border:1px solid var(--ln);border-radius:22px;background:var(--s1);transition:transform .25s var(--e),border-color .25s;will-change:transform}
+.tpl:hover{border-color:var(--ln2)}
+.pv{position:relative;height:210px;border-radius:12px;border:1px solid #fff;overflow:hidden;background:#111;container-type:inline-size;container-name:pvbox}
+.mk{position:absolute;inset:0;display:flex;flex-direction:column;padding:6cqw;gap:3cqw;font-family:var(--body);text-align:left;font-variant-caps:normal}
+.mk h4{font-size:7.6cqw;line-height:1.14;font-family:var(--head);font-weight:700;letter-spacing:-.01em;margin:0}
+.mk p{font-size:3.3cqw;line-height:1.4;opacity:.82;max-width:92%;margin:0}
+.mknav{display:flex;align-items:center;justify-content:space-between;gap:2cqw;font-size:3cqw;padding-bottom:2.4cqw;border-bottom:1px solid rgba(127,127,127,.3)}
+.mklogo{font-weight:800;font-size:3.7cqw;letter-spacing:.01em;white-space:nowrap}
+.mknavlinks{opacity:.62;font-size:2.6cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mkbtn{display:inline-flex;align-self:flex-start;padding:1.7cqw 3.4cqw;border-radius:99px;font-size:2.9cqw;font-weight:700;border:1px solid currentColor;white-space:nowrap}
+.mkbtn.solidbtn{border:0}
+.mkhero{display:flex;flex-direction:column;gap:2.2cqw;flex:1;min-height:0}
+.mkhero.split{flex-direction:row;align-items:center;gap:4cqw}
+.mkhero.split.rev{flex-direction:row-reverse}
+.mkhero.split>div{flex:1;display:flex;flex-direction:column;gap:2.2cqw;min-width:0}
+.mkhero.split .mkphoto{flex:1;align-self:stretch;height:auto}
+.mkphoto{flex:1;border-radius:5px;min-height:14cqw}
+.mkrow3{display:flex;gap:2cqw;flex:1;min-height:0}
+.mkrow3 i{flex:1;border-radius:4px;background:rgba(255,255,255,.22);font-style:normal}
+.mkauthor{display:flex;align-items:center;font-size:2.7cqw;opacity:.8;margin-top:auto}
+.mkavatar{width:2cqw;height:2cqw;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;margin-right:1.4cqw}
+.mkprod-info{display:flex;align-items:baseline;justify-content:space-between;gap:2cqw}
+.mkprice{font-size:4.4cqw;font-weight:800;white-space:nowrap}
+/* per-template palettes */
+.mk-saas{background:#eef1fb;color:#131b3a}.mk-saas .mklogo{color:#3355ff}.mk-saas .mkbtn.solidbtn{background:#3355ff;color:#fff}.mk-saas .mkphoto{background:linear-gradient(135deg,#3355ff26,#7c3aed26,#3355ff12)}
+.mk-portfolio{background:#0d0d0d;color:#f4f4f4}.mk-portfolio .mknavlinks{opacity:.5}.mk-portfolio .mkbtn{border-color:#f4f4f4}.mk-portfolio .mkphoto{background:linear-gradient(160deg,#4a4a4a,#111)}
+.mk-agency{background:linear-gradient(135deg,#ff5b2e,#ff2e7d);color:#fff}.mk-agency .mknavlinks{opacity:.75}
+.mk-restaurant{background:#1c130f;color:#f3e6d8}.mk-restaurant .mklogo{color:#dbaa55;font-style:italic}.mk-restaurant .mknavlinks{opacity:.6}.mk-restaurant .mkbtn.solidbtn{background:#dbaa55;color:#1c130f}.mk-restaurant .mkphoto{background:linear-gradient(160deg,#9a5a26,#3a2213)}
+.mk-blog{background:#f7f1e6;color:#2b2620}.mk-blog h4{font-family:Georgia,'Times New Roman',serif;font-weight:700}.mk-blog .mkphoto{background:linear-gradient(160deg,#a9c2b1,#4d6b5a)}.mk-blog .mkavatar{background:#c9a97e}
+.mk-product{background:#fdfdfd;color:#111}.mk-product .mknavlinks{opacity:.55}.mk-product .mkphoto{background:radial-gradient(circle,#eaeaea,#c4c4c4)}.mk-product .mkbtn.solidbtn{background:#111;color:#fff}
+.tm{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 6px 4px}
+.tm h3{font-size:15px}.tm div{display:flex;gap:8px}
+/* cta */
+.final{position:relative;text-align:center;overflow:hidden;border-top:1px solid var(--ln)}
+.final h2{font-size:clamp(26px,4vw,50px);max-width:700px;margin:0 auto 28px;position:relative}
+.final .btn{position:relative}
+.scene{position:absolute;left:50%;top:50%;width:0;height:0;perspective:900px;pointer-events:none}
+.cube{position:absolute;width:0;height:0;transform-style:preserve-3d;animation:spin 26s linear infinite}
+.cube i{position:absolute;width:240px;height:240px;left:-120px;top:-120px;border:1px solid var(--ln);background:rgba(255,255,255,.02)}
+.cube i:nth-child(1){transform:translateZ(120px)}.cube i:nth-child(2){transform:rotateY(180deg) translateZ(120px)}
+.cube i:nth-child(3){transform:rotateY(90deg) translateZ(120px)}.cube i:nth-child(4){transform:rotateY(-90deg) translateZ(120px)}
+.cube i:nth-child(5){transform:rotateX(90deg) translateZ(120px)}.cube i:nth-child(6){transform:rotateX(-90deg) translateZ(120px)}
+.cube.s{transform:scale(1.9);animation-duration:40s;animation-direction:reverse}
+@keyframes spin{from{transform:rotateX(-24deg) rotateY(0)}to{transform:rotateX(-24deg) rotateY(360deg)}}
+.cube.s{animation-name:spin2}@keyframes spin2{from{transform:scale(1.9) rotateX(-24deg) rotateY(0)}to{transform:scale(1.9) rotateX(-24deg) rotateY(360deg)}}
+/* footer */
+footer{border-top:1px solid var(--ln);padding:64px 0 34px;background:var(--s1)}
+.fg{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px}
+footer h4{font:600 13px var(--head);margin-bottom:14px}footer li{list-style:none;margin-bottom:9px}footer li a{color:var(--mu);font-size:13px}footer li a:hover{color:#fff}
+footer p{color:var(--mu);font-size:13px;max-width:300px;margin-top:14px}
+.legal{margin-top:48px;padding-top:22px;border-top:1px solid var(--ln);color:var(--dim);font-size:12px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+/* modal */
+dialog{margin:auto;width:min(560px,92vw);padding:18px;border:1px solid var(--ln2);border-radius:24px;background:var(--s1);color:var(--tx)}
+dialog::backdrop{background:rgba(0,0,0,.8)}dialog .pv{height:320px}
+dialog .tm{padding-top:18px}
+@media(max-width:960px){
+.links,.acts .login{display:none}.burger{display:grid}
+.drawer{position:fixed;inset:60px 0 auto;z-index:49;background:rgba(5,5,5,.97);border-bottom:1px solid var(--ln);padding:12px 28px 24px;transform:translateY(-130%);transition:transform .4s var(--e);display:block}
+.nav.open+.drawer{transform:none}.drawer a{display:block;padding:14px 0;border-bottom:1px solid var(--ln)}
+.hero .wrap{grid-template-columns:1fr;padding-top:24px}.stage{height:420px;order:2}.rig{scale:.74}
+.fgrid,.tgrid{grid-template-columns:1fr 1fr}.card.wide{grid-column:span 2}
+.steps{grid-template-columns:1fr}.step,.step+.step{padding:30px 0;border-left:0;border-bottom:1px solid var(--ln)}
+.fg{grid-template-columns:1fr 1fr}section{padding:84px 0}}
+@media(max-width:600px){.wrap{padding:0 20px}.fgrid,.tgrid{grid-template-columns:1fr}.card.wide{grid-column:auto}.stage{height:360px}.rig{scale:.6}.hero p.sub{font-size:14px}.acts .btn.sm{padding:8px 14px}}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
 </style>
-
 </head>
-
-
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i1" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></symbol>
+<symbol id="i2" viewBox="0 0 24 24"><path d="M4 4l7 16 2.5-6.5L20 11zM14 14l5 5"/></symbol>
+<symbol id="i3" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18M8 21h8M12 18v3"/></symbol>
+<symbol id="i4" viewBox="0 0 24 24"><rect x="2" y="5" width="14" height="11" rx="1.5"/><rect x="14" y="9" width="8" height="12" rx="1.5"/></symbol>
+<symbol id="i5" viewBox="0 0 24 24"><path d="M12 21V9M7 13l5-5 5 5M4 4h16"/></symbol>
+<symbol id="i6" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+</defs></svg>
 
-
-<!-- =======================================================
-     NEXORA HOST HEADER
-     Hidden automatically for public ?site= URLs
-     ======================================================= -->
-
-<header class="top">
-
-  <a
-    class="logo"
-    href="index.html"
-    aria-label="Nexora AI home"
-  >
-
-    <svg viewBox="0 0 28 28">
-
-      <path
-        d="M14 2l11 6v12l-11 6L3 20V8z"
-      />
-
-      <path
-        d="M14 2v24M3 8l22 12M25 8L3 20"
-        opacity=".45"
-      />
-
-    </svg>
-
-    <span>Nexora AI</span>
-
-  </a>
-
-
-  <span
-    class="name"
-    id="projectName"
-  >
-    Hosted website
-  </span>
-
-
-  <span class="sp"></span>
-
-
-  <a
-    class="btn"
-    href="builder.html"
-  >
-    Builder
-  </a>
-
-
-  <a
-    class="btn"
-    id="editorLink"
-    href="editor.html"
-  >
-    Editor
-  </a>
-
-</header>
-
-
-<!-- =======================================================
-     HOST SHELL
-     ======================================================= -->
-
-<main class="shell">
-
-
-  <div class="bar">
-
-    <span
-      class="dot"
-      aria-hidden="true"
-    ></span>
-
-
-    <span id="status">
-      Loading…
-    </span>
-
-
-    <span class="sp"></span>
-
-
-    <span class="mut">
-      sandboxed
-    </span>
-
+<header class="nav" id="nav"><div class="wrap row">
+  <a href="#top" class="logo" aria-label="Home"><svg viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="1.6"><path d="M14 2l11 6v12l-11 6L3 20V8z"/><path d="M14 2v24M3 8l22 12M25 8L3 20" opacity=".45"/></svg><span data-brand>Nexora AI</span></a>
+  <nav class="links" aria-label="Primary"><a href="#top">Product</a><a href="#features">Features</a><a href="#templates">Templates</a><a href="#how">How It Works</a></nav>
+  <div class="acts">
+    <a href="login.html" class="btn sm login" id="loginBtn">Log In</a>
+    <div class="user-badge hidden" id="userBadge" aria-live="polite">
+      <button class="user-toggle" id="userToggle" type="button" aria-label="User menu">
+        <span class="user-avatar" id="userAvatar">U</span>
+        <span class="user-name" id="userName">User</span>
+      </button>
+      <button class="user-logout" id="logoutBtn" type="button">Logout</button>
+    </div>
+    <button class="burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false">Menu</button>
   </div>
-
-
-  <div class="viewport">
-
-    <div
-      class="site"
-      id="site"
-    ></div>
-
-  </div>
-
-</main>
-
-
-<script>
-
-/* =========================================================
-   FIREBASE INITIALIZATION
-   ========================================================= */
-
-const firebaseReady =
-  Boolean(
-
-    window.firebase &&
-
-    window.FIREBASE_CONFIG?.apiKey &&
-
-    window.FIREBASE_CONFIG?.authDomain &&
-
-    window.FIREBASE_CONFIG?.projectId &&
-
-    window.FIREBASE_CONFIG?.appId
-
-  );
-
-
-if(
-  firebaseReady &&
-  !window.firebase.apps.length
-){
-
-  window.firebase.initializeApp(
-    window.FIREBASE_CONFIG
-  );
-
-}
-
-
-const firestore =
-  firebaseReady &&
-  window.firebase.firestore
-
-    ? window.firebase.firestore()
-
-    : null;
-
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-function $status(text){
-
-  const el =
-    document.querySelector('#status');
-
-  if(el){
-
-    el.textContent = text;
-
-  }
-
-}
-
-
-/* =========================================================
-   LOCAL PROJECT
-   ========================================================= */
-
-function loadLocalProject(){
-
-  try{
-
-    return JSON.parse(
-      localStorage.getItem('nx_project')
-    );
-
-  }catch{
-
-    return null;
-
-  }
-
-}
-
-
-function findLocalProject(id){
-
-  try{
-
-    const list =
-      JSON.parse(
-        localStorage.getItem('nx_projects') || '[]'
-      );
-
-    return list.find(
-      p =>
-        p &&
-        p.id === id
-    ) || null;
-
-  }catch{
-
-    return null;
-
-  }
-
-}
-
-
-/* =========================================================
-   LOAD FIREBASE HOSTED WEBSITE
-   ========================================================= */
-
-async function loadHostedProject(slug){
-
-  if(!firestore){
-
-    throw Object.assign(
-
-      new Error(
-        'Firebase is not configured on this page.'
-      ),
-
-      {
-        code:
-          'firebase_not_configured'
-      }
-
-    );
-
-  }
-
-
-  const cleanSlug =
-    String(slug || '')
-      .trim()
-      .toLowerCase();
-
-
-  if(
-    !cleanSlug ||
-    !/^[a-z0-9][a-z0-9-]{0,39}$/.test(cleanSlug)
-  ){
-
-    throw Object.assign(
-
-      new Error(
-        'Invalid website subdomain.'
-      ),
-
-      {
-        code:
-          'invalid_slug'
-      }
-
-    );
-
-  }
-
-
-  const ref =
-    firestore
-      .collection('sites')
-      .doc(cleanSlug);
-
-
-  const doc =
-    await ref.get();
-
-
-  if(!doc.exists){
-
-    throw Object.assign(
-
-      new Error(
-        'This website could not be found.'
-      ),
-
-      {
-        code:
-          'not_found'
-      }
-
-    );
-
-  }
-
-
-  const data =
-    doc.data() || {};
-
-
-  if(
-    !data.files ||
-    typeof data.files !== 'object'
-  ){
-
-    throw Object.assign(
-
-      new Error(
-        'This website has invalid or missing files.'
-      ),
-
-      {
-        code:
-          'invalid_site'
-      }
-
-    );
-
-  }
-
-
-  return {
-
-    id:
-      cleanSlug,
-
-    slug:
-      cleanSlug,
-
-    name:
-      typeof data.name === 'string' &&
-      data.name.trim()
-        ? data.name.trim()
-        : 'Hosted website',
-
-    visibility:
-      data.visibility === 'private'
-        ? 'private'
-        : 'public',
-
-    uid:
-      data.uid || null,
-
-    files:{
-
-      html:
-        typeof data.files.html === 'string'
-          ? data.files.html
-          : '',
-
-      css:
-        typeof data.files.css === 'string'
-          ? data.files.css
-          : '',
-
-      js:
-        typeof data.files.js === 'string'
-          ? data.files.js
-          : ''
-
-    }
-
-  };
-
-}
-
-
-/* =========================================================
-   RESOLVE PROJECT
-   ========================================================= */
-
-async function resolveProject(){
-
-  const params =
-    new URLSearchParams(
-      location.search
-    );
-
-
-  const slug =
-    params.get('site');
-
-
-  if(slug){
-
-    return await loadHostedProject(
-      slug
-    );
-
-  }
-
-
-  const id =
-    params.get('project');
-
-
-  if(id){
-
-    const found =
-      findLocalProject(id);
-
-    if(found){
-
-      return found;
-
-    }
-
-    throw Object.assign(
-
-      new Error(
-        'This local project could not be found.'
-      ),
-
-      {
-        code:
-          'not_found'
-      }
-
-    );
-
-  }
-
-
-  return loadLocalProject();
-
-}
-
-
-/* =========================================================
-   NEXORA FOOTER
-   This is inserted INTO the generated website.
-   ========================================================= */
-
-const NEXORA_FOOTER = `
-
-<style>
-
-#nexora-powered-by{
-
-  width:100%;
-
-  box-sizing:border-box;
-
-  margin:0;
-
-  padding:20px 24px;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
-  font-size:11px;
-
-  line-height:1.4;
-
-  letter-spacing:.04em;
-
-  color:#777;
-
-  text-align:left;
-
-  background:transparent;
-
-  clear:both;
-
-}
-
-#nexora-powered-by span{
-
-  opacity:.85;
-
-}
-
-</style>
-
-<div
-  id="nexora-powered-by"
-  aria-label="Powered by Nexora AI"
->
-  <span>Powered by Nexora AI</span>
+</div></header>
+<div class="drawer" aria-label="Mobile navigation">
+  <a href="#features">Features</a>
+  <a href="#templates">Templates</a>
+  <a href="#how">How It Works</a>
+  <a href="builder.html">Start Building</a>
 </div>
 
-`;
+<main id="top">
+<div class="hero">
+  <div class="floor"></div>
+  <div class="wrap">
+    <div>
+      <h1>Build extraordinary websites with AI.</h1>
+      <p class="sub">Describe your vision. Generate a website. Customize every detail. Publish your creation.</p>
+      <div class="cta"><a href="builder.html" class="btn solid lg">Start Building Free</a><a href="#templates" class="btn lg">Explore Templates</a></div>
+      <div class="trust"><span>Free to use</span><span>No subscription</span><span>No coding required</span></div>
+    </div>
+    <div class="stage" id="stage" aria-label="Exploded 3D view of a website's layers" role="img">
+      <div class="float"><div class="rig" id="rig">
+        <div class="layer glow"></div>
+        <div class="layer" style="--i:0"><div class="row2"><div class="k grow" style="height:58px"></div><div class="k grow" style="height:58px"></div><div class="k grow" style="height:58px"></div></div><div class="b" style="width:60%"></div><div class="b" style="width:40%"></div><span class="tag">Footer</span></div>
+        <div class="layer" style="--i:1"><div class="g6"><div class="k"></div><div class="k" style="background:rgba(255,255,255,.3)"></div><div class="k"></div><div class="k" style="background:rgba(255,255,255,.22)"></div><div class="k"></div><div class="k" style="background:rgba(255,255,255,.34)"></div></div><span class="tag">Gallery</span></div>
+        <div class="layer" style="--i:2"><div class="b" style="height:16px;width:78%;margin-top:22px;background:#fff"></div><div class="b" style="height:16px;width:52%;background:#fff"></div><div class="b" style="width:66%;margin-top:6px"></div><div class="pill" style="margin-top:8px"></div><span class="tag">Hero</span></div>
+        <div class="layer" style="--i:3;height:64px;flex-direction:row;align-items:center"><div style="width:22px;height:22px;border-radius:50%;background:#fff"></div><div class="grow"></div><div class="b" style="width:34px"></div><div class="b" style="width:34px"></div><div class="b" style="width:34px"></div><div class="pill" style="width:56px;height:16px"></div><span class="tag" style="bottom:auto;top:8px;right:auto;left:14px;display:none">Navbar</span></div>
+      </div></div>
+    </div>
+  </div>
+</div>
 
+<section id="features"><div class="wrap">
+  <div class="head"><h2>Everything you need to go from prompt to page.</h2><p>Generate, refine and ship static websites from one workspace.</p></div>
+  <div class="fgrid">
+    <article class="card wide" data-tilt><svg class="ic"><use href="#i1"/></svg><h3>AI Website Generation</h3><p>Describe the site you want and get real HTML, CSS and JavaScript. One request per Generate click, within your daily limit.</p></article>
+    <article class="card" data-tilt><svg class="ic"><use href="#i2"/></svg><h3>Visual Editing</h3><p>Select a section, change text, colors and spacing, then reorder, duplicate or delete it.</p></article>
+    <article class="card" data-tilt><svg class="ic"><use href="#i3"/></svg><h3>Live Preview</h3><p>Every change renders in a sandboxed preview, isolated from your account.</p></article>
+    <article class="card" data-tilt><svg class="ic"><use href="#i4"/></svg><h3>Responsive Design</h3><p>Switch between desktop, tablet and mobile, and hide sections per device.</p></article>
+    <article class="card" data-tilt><svg class="ic"><use href="#i5"/></svg><h3>Static Website Publishing</h3><p>Download your files or publish through a connected host. Provider limits and terms apply.</p></article>
+    <article class="card wide" data-tilt><svg class="ic"><use href="#i6"/></svg><h3>Project Management</h3><p>Save drafts, rename, duplicate, download and organize every website in one place.</p></article>
+  </div>
+</div></section>
 
-/* =========================================================
-   RESIZE SCRIPT
-   ========================================================= */
+<section id="how" style="padding-top:0"><div class="wrap">
+  <div class="head"><h2>Three steps. One finished website.</h2></div>
+  <div class="steps">
+    <div class="step"><b>1</b><h3>Describe your idea</h3><p>Write what you want to build, or start from a template.</p></div>
+    <div class="step"><b>2</b><h3>Customize your website</h3><p>Edit visually or in code, and check it on every screen size.</p></div>
+    <div class="step"><b>3</b><h3>Publish your creation</h3><p>Deploy static files to a supported host, or download them.</p></div>
+  </div>
+</div></section>
 
-const RESIZE_SCRIPT = `
+<section id="templates" style="padding-top:0"><div class="wrap">
+  <div class="head"><h2>Start from a template.</h2><p>Six starting points, all fully editable.</p></div>
+  <div class="tgrid" id="tgrid"></div>
+</div></section>
+
+<section class="final"><div class="scene" aria-hidden="true"><div class="cube s"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="wrap"><h2>Your next website starts with a prompt.</h2><a href="builder.html" class="btn solid lg">Create Your First Website</a></div>
+</section>
+</main>
+
+<footer><div class="wrap">
+  <div class="fg">
+    <div><a href="#top" class="logo"><span data-brand>Nexora AI</span></a><p>A free AI website builder for static websites.</p></div>
+    <div><h4>Product</h4><ul><li><a href="#features">Features</a></li><li><a href="#templates">Templates</a></li><li><a href="#how">How It Works</a></li></ul></div>
+    <div><h4>Resources</h4><ul><li><a href="#">Documentation</a></li><li><a href="#">GitHub</a></li><li><a href="#">Contact</a></li></ul></div>
+    <div><h4>Legal</h4><ul><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+  </div>
+  <div class="legal"><span>© <span id="yr"></span> <span data-brand>Nexora AI</span></span><span>Publishing is subject to the limits and terms of the selected hosting provider.</span></div>
+</div></footer>
+
+<dialog id="dlg"><div id="dlgBody"></div></dialog>
 
 <script>
-
-(function(){
-
-  function sendHeight(){
-
-    try{
-
-      const bodyHeight =
-        document.body
-          ? document.body.scrollHeight
-          : 0;
-
-      const htmlHeight =
-        document.documentElement
-          ? document.documentElement.scrollHeight
-          : 0;
-
-      const height =
-        Math.max(
-          bodyHeight,
-          htmlHeight
-        );
-
-      window.parent.postMessage(
-
-        {
-          type:
-            'nexora-host-height',
-
-          height:
-            height
-        },
-
-        '*'
-
-      );
-
-    }catch(e){}
-
-  }
-
-
-  window.addEventListener(
-    'load',
-    sendHeight
-  );
-
-
-  window.addEventListener(
-    'resize',
-    sendHeight
-  );
-
-
-  if(
-    typeof ResizeObserver !==
-    'undefined'
-  ){
-
-    const observer =
-      new ResizeObserver(
-        sendHeight
-      );
-
-    observer.observe(
-      document.documentElement
-    );
-
-  }
-
-
-  setTimeout(
-    sendHeight,
-    100
-  );
-
-  setTimeout(
-    sendHeight,
-    500
-  );
-
-  setTimeout(
-    sendHeight,
-    1000
-  );
-
-})();
-
-<\/script>
-
-`;
-
-
-/* =========================================================
-   COMBINE GENERATED WEBSITE
-   ========================================================= */
-
-function combine(files){
-
-  if(
-    !files ||
-    typeof files !== 'object'
-  ){
-
-    return '';
-
-  }
-
-
-  let html =
-    files.html || '';
-
-  const css =
-    files.css || '';
-
-  const js =
-    files.js || '';
-
-
-  let cssInjected =
-    false;
-
-  let jsInjected =
-    false;
-
-
-  /* -------------------------------------------------------
-     Make sure a complete HTML document exists
-     ------------------------------------------------------- */
-
-  if(
-    !/<html[\s>]/i.test(html)
-  ){
-
-    html =
-      '<!doctype html>' +
-      '<html>' +
-      '<head></head>' +
-      '<body>' +
-      html +
-      '</body>' +
-      '</html>';
-
-  }
-
-
-  /* -------------------------------------------------------
-     Inject CSS
-     ------------------------------------------------------- */
-
-  html =
-    html.replace(
-
-      /<link[^>]+style\.css[^>]*>/i,
-
-      function(){
-
-        cssInjected = true;
-
-        return (
-          '<style>\n' +
-          css +
-          '\n</style>'
-        );
-
-      }
-
-    );
-
-
-  /* -------------------------------------------------------
-     Inject JS
-     ------------------------------------------------------- */
-
-  html =
-    html.replace(
-
-      /<script[^>]+src=["']script\.js["'][^>]*>\s*<\/script>/i,
-
-      function(){
-
-        jsInjected = true;
-
-        return (
-          '<script>\n' +
-          js +
-          '\n<\/script>'
-        );
-
-      }
-
-    );
-
-
-  /* -------------------------------------------------------
-     CSS fallback
-     ------------------------------------------------------- */
-
-  if(
-    !cssInjected &&
-    css
-  ){
-
-    if(
-      /<\/head>/i.test(html)
-    ){
-
-      html =
-        html.replace(
-
-          /<\/head>/i,
-
-          '<style>\n' +
-          css +
-          '\n</style>' +
-          '</head>'
-
-        );
-
-    }else{
-
-      html =
-        '<style>\n' +
-        css +
-        '\n</style>\n' +
-        html;
-
-    }
-
-  }
-
-
-  /* -------------------------------------------------------
-     JS fallback
-     ------------------------------------------------------- */
-
-  if(
-    !jsInjected &&
-    js
-  ){
-
-    if(
-      /<\/body>/i.test(html)
-    ){
-
-      html =
-        html.replace(
-
-          /<\/body>/i,
-
-          '<script>\n' +
-          js +
-          '\n<\/script>' +
-          '</body>'
-
-        );
-
-    }else{
-
-      html +=
-        '\n<script>\n' +
-        js +
-        '\n<\/script>';
-
-    }
-
-  }
-
-
-  /* =======================================================
-     ADD POWERED BY NEXORA AI
-     ONLY TO PUBLIC HOSTED WEBSITES
-     ======================================================= */
-
-  if(
-    /<\/body>/i.test(html)
-  ){
-
-    html =
-      html.replace(
-
-        /<\/body>/i,
-
-        NEXORA_FOOTER +
-        RESIZE_SCRIPT +
-        '</body>'
-
-      );
-
-  }else{
-
-    html +=
-      NEXORA_FOOTER +
-      RESIZE_SCRIPT;
-
-  }
-
-
-  return html;
-
-}
-
-
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
-
-function showEmpty(){
-
-  const site =
-    document.querySelector('#site');
-
-
-  site.innerHTML = `
-
-    <div class="empty">
-
-      <div>
-
-        <b>
-          No hosted website yet
-        </b>
-
-        Generate a website in
-        Builder first.
-
-        <br>
-
-        <a
-          class="btn solid"
-          href="builder.html"
-        >
-          Open Builder
-        </a>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =========================================================
-   ERROR STATE
-   ========================================================= */
-
-function showError(
-  title,
-  message
-){
-
-  const site =
-    document.querySelector('#site');
-
-
-  site.innerHTML = `
-
-    <div class="empty">
-
-      <div>
-
-        <b>
-          ${title}
-        </b>
-
-        ${message}
-
-        <br>
-
-        <a
-          class="btn"
-          href="builder.html"
-        >
-          Back to Builder
-        </a>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =========================================================
-   AUTO RESIZE IFRAME
-   ========================================================= */
-
-window.addEventListener(
-  'message',
-  function(event){
-
-    const data =
-      event.data;
-
-
-    if(
-      !data ||
-      data.type !==
-      'nexora-host-height'
-    ){
-
-      return;
-
-    }
-
-
-    const frame =
-      document.querySelector(
-        '#site iframe'
-      );
-
-
-    if(!frame){
-
-      return;
-
-    }
-
-
-    const height =
-      Number(data.height);
-
-
-    if(
-      !Number.isFinite(height) ||
-      height <= 0
-    ){
-
-      return;
-
-    }
-
-
-    frame.style.height =
-      Math.ceil(
-        height + 2
-      ) + 'px';
-
-
-    frame.style.minHeight =
-      Math.ceil(
-        height + 2
-      ) + 'px';
-
-  }
-);
-
-
-/* =========================================================
-   OPEN WEBSITE
-   ========================================================= */
-
-(async function(){
-
-  const site =
-    document.querySelector('#site');
-
-  const projectName =
-    document.querySelector('#projectName');
-
-  const editorLink =
-    document.querySelector('#editorLink');
-
-
-  try{
-
-    const project =
-      await resolveProject();
-
-
-    /* -----------------------------------------------------
-       No project
-       ----------------------------------------------------- */
-
-    if(
-      !project ||
-      !project.files
-    ){
-
-      $status(
-        'Nothing hosted yet'
-      );
-
-      showEmpty();
-
-      return;
-
-    }
-
-
-    /* -----------------------------------------------------
-       Project name
-       ----------------------------------------------------- */
-
-    if(projectName){
-
-      projectName.textContent =
-        project.name ||
-        'Hosted website';
-
-    }
-
-
-    /* -----------------------------------------------------
-       Editor link
-       ----------------------------------------------------- */
-
-    if(editorLink){
-
-      if(
-        project.id &&
-        !project.slug
-      ){
-
-        editorLink.href =
-          'editor.html?project=' +
-          encodeURIComponent(
-            project.id
-          );
-
-      }else{
-
-        editorLink.href =
-          'editor.html';
-
-      }
-
-    }
-
-
-    /* -----------------------------------------------------
-       Validate HTML
-       ----------------------------------------------------- */
-
-    if(
-      typeof project.files.html !==
-      'string' ||
-      !project.files.html.trim()
-    ){
-
-      $status(
-        'Website has no HTML'
-      );
-
-      showError(
-        'Invalid website',
-        'The published website does not contain valid HTML.'
-      );
-
-      return;
-
-    }
-
-
-    /* -----------------------------------------------------
-       Status
-       ----------------------------------------------------- */
-
-    $status(
-
-      project.slug
-        ? 'Website is live'
-        : 'Local preview'
-
-    );
-
-
-    /* -----------------------------------------------------
-       CREATE IFRAME
-       ----------------------------------------------------- */
-
-    const frame =
-      document.createElement(
-        'iframe'
-      );
-
-
-    frame.title =
-      project.name ||
-      'Hosted website';
-
-
-    frame.sandbox =
-      'allow-scripts allow-forms allow-modals';
-
-
-    frame.referrerPolicy =
-      'no-referrer';
-
-
-    /*
-     * IMPORTANT:
-     *
-     * The generated website itself is the iframe
-     * content. The Nexora header is NOT inside it.
-     */
-
-    frame.srcdoc =
-      combine(
-        project.files
-      );
-
-
-    /*
-     * Start with a large enough height.
-     * The resize script will replace this
-     * with the actual website height.
-     */
-
-    frame.style.height =
-      '100vh';
-
-    frame.style.minHeight =
-      '100vh';
-
-
-    frame.addEventListener(
-      'load',
-      function(){
-
-        if(project.slug){
-
-          $status(
-            'Website is live'
-          );
-
-        }else{
-
-          $status(
-            'Local preview'
-          );
-
-        }
-
-      }
-    );
-
-
-    site.innerHTML = '';
-
-    site.append(frame);
-
-
-  }catch(error){
-
-    console.error(
-      'Hosted website loading error:',
-      error
-    );
-
-
-    const code =
-      error?.code;
-
-
-    if(
-      code ===
-      'firebase_not_configured'
-    ){
-
-      $status(
-        'Firebase configuration error'
-      );
-
-      showError(
-        'Firebase is not configured',
-        'Check your firebase-config.js configuration.'
-      );
-
-      return;
-
-    }
-
-
-    if(
-      code ===
-      'permission-denied'
-    ){
-
-      $status(
-        'Access denied'
-      );
-
-      showError(
-        'Website cannot be loaded',
-        'Firestore Security Rules are blocking access to this website.'
-      );
-
-      return;
-
-    }
-
-
-    if(
-      code ===
-      'not_found'
-    ){
-
-      $status(
-        'Website not found'
-      );
-
-      showError(
-        'Website not found',
-        'The requested website does not exist or has been removed.'
-      );
-
-      return;
-
-    }
-
-
-    if(
-      code ===
-      'invalid_slug'
-    ){
-
-      $status(
-        'Invalid website address'
-      );
-
-      showError(
-        'Invalid website address',
-        'The website subdomain is not valid.'
-      );
-
-      return;
-
-    }
-
-
-    if(
-      code ===
-      'invalid_site'
-    ){
-
-      $status(
-        'Invalid website'
-      );
-
-      showError(
-        'Invalid website',
-        'The published website data is incomplete.'
-      );
-
-      return;
-
-    }
-
-
-    $status(
-      'Website unavailable'
-    );
-
-
-    showError(
-
-      'Website temporarily unavailable',
-
-      error?.message ||
-      'An unexpected error occurred while loading the website.'
-
-    );
-
-  }
-
-})();
-
+const BRAND='Nexora AI'; // change the product name here
+const TPL=[['SaaS Landing Page','saas'],['Creative Portfolio','portfolio'],['Agency Website','agency'],['Restaurant Website','restaurant'],['Personal Blog','blog'],['Product Landing Page','product']];
+const MOCKS=[
+'<div class="mk mk-saas"><div class="mknav"><span class="mklogo">Flowly</span><span class="mknavlinks">Features · Pricing · Login</span></div><div class="mkhero"><h4>Automate your workflow in minutes</h4><p>The all-in-one platform for modern teams.</p><span class="mkbtn solidbtn">Start Free Trial</span></div><div class="mkphoto"></div></div>',
+'<div class="mk mk-portfolio"><div class="mknav"><span class="mklogo">ALEX RIVERA</span><span class="mknavlinks">Work · About · Contact</span></div><div class="mkhero split"><div><h4>Visual Designer</h4><p>Based in Lisbon. Available for freelance work.</p><span class="mkbtn">View Work →</span></div><div class="mkphoto"></div></div></div>',
+'<div class="mk mk-agency"><div class="mknav"><span class="mklogo">FORGE&nbsp;CO.</span><span class="mknavlinks">Services · Work · Contact</span></div><h4>We build brands that move.</h4><p>Strategy, design and digital for ambitious companies.</p><div class="mkrow3"><i></i><i></i><i></i></div></div>',
+'<div class="mk mk-restaurant"><div class="mknav"><span class="mklogo">Bella Notte</span><span class="mknavlinks">Menu · Reserve · Contact</span></div><div class="mkhero split rev"><div><h4>Fine Italian Dining</h4><p>Handmade pasta &amp; a wood-fired oven, since 1994.</p><span class="mkbtn solidbtn">Reserve a Table</span></div><div class="mkphoto"></div></div></div>',
+'<div class="mk mk-blog"><div class="mknav"><span class="mklogo">The Wandering Pen</span><span class="mknavlinks">Stories · Travel · About</span></div><div class="mkphoto"></div><h4>Three Weeks Across Northern Japan</h4><p>Notes and a few wrong turns from a slow trip through Tohoku.</p><div class="mkauthor"><span class="mkavatar"></span>Mia Chen · 6 min read</div></div>',
+'<div class="mk mk-product"><div class="mknav"><span class="mklogo">AURA</span><span class="mknavlinks">Shop · Story · Support</span></div><div class="mkphoto"></div><div class="mkprod-info"><h4>Aura Watch</h4><span class="mkprice">$129</span></div><span class="mkbtn solidbtn">Add to Cart</span></div>'];
+const pv=i=>'<div class="pv">'+MOCKS[i]+'</div>';
+const g=document.getElementById('tgrid'),dlg=document.getElementById('dlg');
+g.innerHTML=TPL.map((t,i)=>'<article class="tpl" data-tilt>'+pv(i)+'<div class="tm"><h3>'+t[0]+'</h3><div><button class="btn sm" data-p="'+i+'">Preview</button><a class="btn sm solid" href="builder.html?template='+t[1]+'">Use Template</a></div></div></article>').join('');
+g.addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const idx=+b.dataset.p;const t=TPL[idx];
+document.getElementById('dlgBody').innerHTML=pv(idx)+'<div class="tm"><h3>'+t[0]+'</h3><div><button class="btn sm" id="dx">Close</button><a class="btn sm solid" href="builder.html?template='+t[1]+'">Use Template</a></div></div>';
+dlg.showModal();document.getElementById('dx').onclick=()=>dlg.close()});
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+document.querySelectorAll('[data-brand]').forEach(n=>n.textContent=BRAND);
+document.title=BRAND+' — Build extraordinary websites with AI';
+document.getElementById('yr').textContent=new Date().getFullYear();
+const hasSession=()=>{try{return !!JSON.parse(localStorage.getItem('nx_session'))}catch{return false}};
+const getSession=()=>{try{return JSON.parse(localStorage.getItem('nx_session'))||null}catch{return null}};
+const loginModal=document.createElement('div');
+loginModal.className='login-modal-backdrop';
+loginModal.innerHTML='<div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="loginFirstTitle"><div class="login-modal-icon">!</div><h3 id="loginFirstTitle">Login First</h3><p>Please sign in to continue building your website.</p><div class="login-modal-actions"><button class="btn" type="button" id="loginModalClose">Close</button><a class="btn solid" id="loginModalGo" href="login.html">Sign In</a></div></div>';
+document.body.appendChild(loginModal);
+const showLoginFirst=(target='builder.html')=>{const next=target||'builder.html';const link=loginModal.querySelector('#loginModalGo');link.href='login.html?next='+encodeURIComponent(next);loginModal.classList.add('show');};
+const hideLoginFirst=()=>loginModal.classList.remove('show');
+loginModal.addEventListener('click',e=>{if(e.target===loginModal)hideLoginFirst();});
+loginModal.querySelector('#loginModalClose').addEventListener('click',hideLoginFirst);
+const syncAuthUI=()=>{const session=getSession();const badge=document.getElementById('userBadge');const loginBtn=document.getElementById('loginBtn');const avatar=document.getElementById('userAvatar');const nameEl=document.getElementById('userName');const logoutBtn=document.getElementById('logoutBtn');const userToggle=document.getElementById('userToggle');if(session){const name=session.name||session.email||'User';const label=name.trim().split(' ')[0]||'U';badge.classList.remove('hidden');loginBtn.style.display='none';avatar.textContent=label.charAt(0).toUpperCase();nameEl.textContent=name;logoutBtn.classList.remove('visible');logoutBtn.onclick=()=>{localStorage.removeItem('nx_session');location.reload();};userToggle.onclick=()=>{logoutBtn.classList.toggle('visible');};}else{badge.classList.add('hidden');loginBtn.style.display='inline-flex';logoutBtn.classList.remove('visible');}};
+syncAuthUI();
+const requireLogin=e=>{if(hasSession())return;const link=e.currentTarget.getAttribute('href')||'builder.html';e.preventDefault();showLoginFirst(link);};
+document.querySelectorAll('a[href^="builder.html"]').forEach(a=>a.addEventListener('click',requireLogin));
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',e=>{if(hasSession())return;e.preventDefault();showLoginFirst('builder.html')}));
+// nav
+const nav=document.getElementById('nav'),bg=document.getElementById('burger');
+addEventListener('scroll',()=>nav.classList.toggle('on',scrollY>12),{passive:true});
+bg.onclick=()=>bg.setAttribute('aria-expanded',nav.classList.toggle('open'));
+document.querySelectorAll('.drawer a').forEach(a=>a.onclick=()=>{nav.classList.remove('open');bg.setAttribute('aria-expanded','false')});
+// hero 3D pointer tilt (transform-only, rAF-throttled)
+const st=document.getElementById('stage'),rig=document.getElementById('rig');let raf;
+st.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;const r=st.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{rig.style.setProperty('--px',x*26+'deg');rig.style.setProperty('--py',-y*16+'deg')})});
+st.addEventListener('pointerleave',()=>{rig.style.setProperty('--px','0deg');rig.style.setProperty('--py','0deg')});
+// card tilt
+if(matchMedia('(hover:hover)').matches&&!matchMedia('(prefers-reduced-motion:reduce)').matches)document.querySelectorAll('[data-tilt]').forEach(el=>{let f;
+el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;cancelAnimationFrame(f);
+f=requestAnimationFrame(()=>{el.style.transform='perspective(900px) rotateX('+((.5-y)*7)+'deg) rotateY('+((x-.5)*9)+'deg)';el.style.setProperty('--mx',x*100+'%');el.style.setProperty('--my',y*100+'%')})});
+el.addEventListener('pointerleave',()=>{el.style.transform=''})});
 </script>
-
-
 </body>
-
 </html>
