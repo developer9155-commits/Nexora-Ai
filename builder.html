@@ -124,7 +124,7 @@ const NX=(()=>{
 const CFG={
   BRAND:'Nexora AI',
   /* Set this to your deployed backend's /generate URL, e.g. https://nexora-ai-proxy.onrender.com/generate (Render) or https://nexora-ai-proxy.up.railway.app/generate (Railway) */
-  BACKEND_ENDPOINT:'https://backend-1-64lh.onrender.com/generate'
+  BACKEND_ENDPOINT:'https://nexora-ai-backend-l17c.onrender.com/generate'
 };
 const firebaseReady=Boolean(window.firebase&&window.FIREBASE_CONFIG?.apiKey&&window.FIREBASE_CONFIG?.authDomain&&window.FIREBASE_CONFIG?.projectId&&window.FIREBASE_CONFIG?.appId);
 if(firebaseReady&&!window.firebase.apps.length)window.firebase.initializeApp(window.FIREBASE_CONFIG);
