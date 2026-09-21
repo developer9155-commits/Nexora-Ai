@@ -15,7 +15,6 @@
 
 <!-- =======================================================
      PUBLIC HOST DETECTION
-     If ?site= exists, immediately switch to clean website mode
      ======================================================= -->
 
 <script>
@@ -23,14 +22,13 @@
 (function(){
 
   const params =
-    new URLSearchParams(
-      location.search
-    );
+    new URLSearchParams(location.search);
 
   if(params.get('site')){
 
-    document.documentElement
-      .classList.add('public-hosted');
+    document.documentElement.classList.add(
+      'public-hosted'
+    );
 
   }
 
@@ -41,8 +39,6 @@
 
 <!-- =======================================================
      LOGIN CHECK
-     Public hosted websites do NOT require login.
-     Login is only required when opening host.html directly.
      ======================================================= -->
 
 <script>
@@ -50,9 +46,7 @@
 (function(){
 
   const p =
-    new URLSearchParams(
-      location.search
-    );
+    new URLSearchParams(location.search);
 
   if(
     p.get('site') ||
@@ -67,14 +61,11 @@
 
     const session =
       JSON.parse(
-        localStorage.getItem(
-          'nx_session'
-        )
+        localStorage.getItem('nx_session')
       );
 
     if(
-      session?.provider !==
-      'firebase'
+      session?.provider !== 'firebase'
     ){
 
       location.replace(
@@ -126,19 +117,14 @@
 :root{
 
   --bg:#050505;
-
   --s1:#0d0d0d;
-
   --s2:#161616;
-
   --s3:#1f1f1f;
 
   --ln:rgba(255,255,255,.11);
-
   --ln2:rgba(255,255,255,.24);
 
   --tx:#f4f4f4;
-
   --mu:#9b9b9b;
 
   --head:
@@ -518,15 +504,8 @@ iframe{
 
 
 /* =========================================================
-   PUBLIC HOSTED WEBSITE MODE
-
-   When URL is:
-
-   host.html?site=mywebsite
-
-   ONLY THE GENERATED WEBSITE IS SHOWN.
+   PUBLIC WEBSITE MODE
    ========================================================= */
-
 
 html.public-hosted,
 html.public-hosted body{
@@ -535,7 +514,7 @@ html.public-hosted body{
 
   min-width:100%;
 
-  height:auto;
+  height:100%;
 
   min-height:100%;
 
@@ -543,24 +522,16 @@ html.public-hosted body{
 
   padding:0;
 
-  overflow:auto;
+  overflow:hidden;
 
   background:#fff;
 
 }
 
 
-/* Hide Nexora header */
+/* Completely remove Nexora UI */
 
-html.public-hosted .top{
-
-  display:none !important;
-
-}
-
-
-/* Hide Published via Firebase bar */
-
+html.public-hosted .top,
 html.public-hosted .bar{
 
   display:none !important;
@@ -568,7 +539,7 @@ html.public-hosted .bar{
 }
 
 
-/* Remove Nexora shell */
+/* Public shell */
 
 html.public-hosted .shell{
 
@@ -576,14 +547,18 @@ html.public-hosted .shell{
 
   width:100%;
 
-  height:auto;
+  height:100%;
 
-  min-height:100vh;
+  min-height:100%;
+
+  margin:0;
+
+  padding:0;
 
 }
 
 
-/* Remove preview padding */
+/* Public viewport */
 
 html.public-hosted .viewport{
 
@@ -591,30 +566,32 @@ html.public-hosted .viewport{
 
   width:100%;
 
-  height:auto;
+  height:100%;
 
-  min-height:100vh;
+  min-height:100%;
 
   margin:0;
 
   padding:0;
 
-  overflow:visible;
+  overflow:hidden;
 
   background:#fff;
 
 }
 
 
-/* Remove preview card */
+/* Public website container */
 
 html.public-hosted .site{
 
+  display:block;
+
   width:100%;
 
-  height:auto;
+  height:100%;
 
-  min-height:100vh;
+  min-height:100%;
 
   margin:0;
 
@@ -624,7 +601,7 @@ html.public-hosted .site{
 
   border-radius:0;
 
-  overflow:visible;
+  overflow:hidden;
 
   background:#fff;
 
@@ -633,7 +610,7 @@ html.public-hosted .site{
 }
 
 
-/* Hosted generated website */
+/* Public generated website */
 
 html.public-hosted iframe{
 
@@ -641,9 +618,9 @@ html.public-hosted iframe{
 
   width:100%;
 
-  height:100vh;
+  height:100%;
 
-  min-height:100vh;
+  min-height:100%;
 
   margin:0;
 
@@ -702,7 +679,7 @@ html.public-hosted iframe{
 
 
 /* =========================================================
-   PUBLIC MODE MOBILE
+   PUBLIC MOBILE
    ========================================================= */
 
 @media(max-width:700px){
@@ -731,11 +708,9 @@ html.public-hosted iframe{
 
 <!-- =======================================================
      NEXORA HEADER
-     Hidden automatically for ?site=
      ======================================================= -->
 
 <header class="top">
-
 
   <a
     class="logo"
@@ -788,17 +763,14 @@ html.public-hosted iframe{
     Editor
   </a>
 
-
 </header>
 
 
 <!-- =======================================================
      HOST SHELL
-     Hidden visually in public mode except generated iframe
      ======================================================= -->
 
 <main class="shell">
-
 
   <div class="bar">
 
@@ -807,14 +779,11 @@ html.public-hosted iframe{
       aria-hidden="true"
     ></span>
 
-
     <span id="status">
       Loading…
     </span>
 
-
     <span class="sp"></span>
-
 
     <span class="mut">
       sandboxed
@@ -825,15 +794,12 @@ html.public-hosted iframe{
 
   <div class="viewport">
 
-
     <div
       class="site"
       id="site"
     ></div>
 
-
   </div>
-
 
 </main>
 
@@ -888,14 +854,11 @@ const firestore =
 function $status(text){
 
   const el =
-    document.querySelector(
-      '#status'
-    );
+    document.querySelector('#status');
 
   if(el){
 
-    el.textContent =
-      text;
+    el.textContent = text;
 
   }
 
@@ -903,7 +866,7 @@ function $status(text){
 
 
 /* =========================================================
-   LOAD LOCAL PROJECT
+   LOCAL PROJECT
    ========================================================= */
 
 function loadLocalProject(){
@@ -911,11 +874,7 @@ function loadLocalProject(){
   try{
 
     return JSON.parse(
-
-      localStorage.getItem(
-        'nx_project'
-      )
-
+      localStorage.getItem('nx_project')
     );
 
   }catch{
@@ -927,32 +886,20 @@ function loadLocalProject(){
 }
 
 
-/* =========================================================
-   FIND LOCAL PROJECT
-   ========================================================= */
-
 function findLocalProject(id){
 
   try{
 
     const list =
       JSON.parse(
-
-        localStorage.getItem(
-          'nx_projects'
-        ) || '[]'
-
+        localStorage.getItem('nx_projects') || '[]'
       );
 
-
     return list.find(
-
       p =>
         p &&
         p.id === id
-
     ) || null;
-
 
   }catch{
 
@@ -964,7 +911,7 @@ function findLocalProject(id){
 
 
 /* =========================================================
-   LOAD FIREBASE HOSTED WEBSITE
+   FIREBASE HOSTED WEBSITE
    ========================================================= */
 
 async function loadHostedProject(slug){
@@ -978,8 +925,7 @@ async function loadHostedProject(slug){
       ),
 
       {
-        code:
-          'firebase_not_configured'
+        code:'firebase_not_configured'
       }
 
     );
@@ -988,11 +934,9 @@ async function loadHostedProject(slug){
 
 
   const cleanSlug =
-    String(
-      slug || ''
-    )
-    .trim()
-    .toLowerCase();
+    String(slug || '')
+      .trim()
+      .toLowerCase();
 
 
   if(!cleanSlug){
@@ -1004,16 +948,13 @@ async function loadHostedProject(slug){
       ),
 
       {
-        code:
-          'invalid_slug'
+        code:'invalid_slug'
       }
 
     );
 
   }
 
-
-  /* Safe Firestore document ID */
 
   if(
     !/^[a-z0-9][a-z0-9-]{0,39}$/.test(
@@ -1028,8 +969,7 @@ async function loadHostedProject(slug){
       ),
 
       {
-        code:
-          'invalid_slug'
+        code:'invalid_slug'
       }
 
     );
@@ -1056,8 +996,7 @@ async function loadHostedProject(slug){
       ),
 
       {
-        code:
-          'not_found'
+        code:'not_found'
       }
 
     );
@@ -1081,8 +1020,7 @@ async function loadHostedProject(slug){
       ),
 
       {
-        code:
-          'invalid_site'
+        code:'invalid_site'
       }
 
     );
@@ -1092,11 +1030,9 @@ async function loadHostedProject(slug){
 
   return {
 
-    id:
-      cleanSlug,
+    id:cleanSlug,
 
-    slug:
-      cleanSlug,
+    slug:cleanSlug,
 
     name:
       typeof data.name === 'string' &&
@@ -1111,8 +1047,7 @@ async function loadHostedProject(slug){
         ? 'private'
         : 'public',
 
-    uid:
-      data.uid || null,
+    uid:data.uid || null,
 
     files:{
 
@@ -1150,26 +1085,16 @@ async function resolveProject(){
     );
 
 
-  /* -------------------------------------------------------
-     Firebase hosted website
-     ------------------------------------------------------- */
-
   const slug =
     params.get('site');
 
 
   if(slug){
 
-    return await loadHostedProject(
-      slug
-    );
+    return await loadHostedProject(slug);
 
   }
 
-
-  /* -------------------------------------------------------
-     Local project
-     ------------------------------------------------------- */
 
   const id =
     params.get('project');
@@ -1187,6 +1112,7 @@ async function resolveProject(){
 
     }
 
+
     throw Object.assign(
 
       new Error(
@@ -1194,8 +1120,7 @@ async function resolveProject(){
       ),
 
       {
-        code:
-          'not_found'
+        code:'not_found'
       }
 
     );
@@ -1209,7 +1134,167 @@ async function resolveProject(){
 
 
 /* =========================================================
-   COMBINE GENERATED HTML + CSS + JS
+   CLEAN GENERATED WEBSITE
+   ========================================================= */
+
+function cleanGeneratedHtml(html){
+
+  if(!html){
+
+    return html;
+
+  }
+
+
+  /*
+   * Remove an old Nexora footer if the generated
+   * website already contains one.
+   */
+
+  html = html.replace(
+
+    /<[^>]+id=["']nexora-powered-by["'][^>]*>[\s\S]*?<\/[^>]+>/gi,
+
+    ''
+
+  );
+
+
+  /*
+   * Remove known Nexora host/editor containers.
+   * This does NOT remove normal website content.
+   */
+
+  html = html.replace(
+
+    /<(header|div|section|aside|nav|footer)[^>]+(?:id|class)=["'][^"']*(?:nexora-host|nexora-builder|nexora-editor|nexora-preview|host-ui|builder-ui|editor-ui)[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi,
+
+    ''
+
+  );
+
+
+  /*
+   * Remove the exact placeholder block that sometimes
+   * gets generated instead of the actual website.
+   */
+
+  try{
+
+    const parser =
+      new DOMParser();
+
+    const doc =
+      parser.parseFromString(
+        html,
+        'text/html'
+      );
+
+
+    const elements =
+      Array.from(
+        doc.body.querySelectorAll('*')
+      );
+
+
+    for(
+      const element of elements
+    ){
+
+      const text =
+        (element.textContent || '')
+          .replace(/\s+/g,' ')
+          .trim()
+          .toUpperCase();
+
+
+      if(
+        text.includes('YOUR GENERATED WEBSITE') &&
+        text.includes('YOUR WEBSITE CONTENT') &&
+        text.includes('YOUR IMAGES') &&
+        text.includes('YOUR BUTTONS') &&
+        text.includes('YOUR SECTIONS')
+      ){
+
+        element.remove();
+
+      }
+
+    }
+
+
+    /*
+     * Remove individual placeholder lines if they
+     * remain as direct body text.
+     */
+
+    const walker =
+      doc.createTreeWalker(
+        doc.body,
+        NodeFilter.SHOW_TEXT
+      );
+
+
+    const textNodes = [];
+
+    let node;
+
+    while(
+      (node = walker.nextNode())
+    ){
+
+      textNodes.push(node);
+
+    }
+
+
+    for(
+      const textNode of textNodes
+    ){
+
+      const value =
+        textNode.nodeValue
+          .replace(/\s+/g,' ')
+          .trim()
+          .toUpperCase();
+
+
+      if(
+        value === 'YOUR GENERATED WEBSITE' ||
+        value === 'YOUR WEBSITE CONTENT' ||
+        value === 'YOUR IMAGES' ||
+        value === 'YOUR BUTTONS' ||
+        value === 'YOUR SECTIONS'
+      ){
+
+        textNode.remove();
+
+      }
+
+    }
+
+
+    html =
+      '<!doctype html>\n' +
+      doc.documentElement.outerHTML;
+
+  }catch(error){
+
+    console.warn(
+      'Generated HTML cleanup failed:',
+      error
+    );
+
+  }
+
+
+  return html;
+
+}
+
+
+/* =========================================================
+   COMBINE HTML + CSS + JS
    ========================================================= */
 
 function combine(files){
@@ -1234,27 +1319,23 @@ function combine(files){
     files.js || '';
 
 
-  let cssInjected =
-    false;
-
-  let jsInjected =
-    false;
+  let cssInjected = false;
+  let jsInjected = false;
 
 
   /* =======================================================
-     Ensure proper HTML document
+     ENSURE HTML DOCUMENT
      ======================================================= */
 
   if(
-    !/<html[\s>]/i.test(
-      html
-    )
+    !/<html[\s>]/i.test(html)
   ){
 
     html =
       '<!doctype html>' +
-      '<html>' +
-      '<head></head>' +
+      '<html lang="en">' +
+      '<head>' +
+      '</head>' +
       '<body>' +
       html +
       '</body>' +
@@ -1264,7 +1345,7 @@ function combine(files){
 
 
   /* =======================================================
-     Inject CSS
+     INJECT CSS
      ======================================================= */
 
   html =
@@ -1288,7 +1369,7 @@ function combine(files){
 
 
   /* =======================================================
-     Inject JavaScript
+     INJECT JS
      ======================================================= */
 
   html =
@@ -1321,9 +1402,7 @@ function combine(files){
   ){
 
     if(
-      /<\/head>/i.test(
-        html
-      )
+      /<\/head>/i.test(html)
     ){
 
       html =
@@ -1361,9 +1440,7 @@ function combine(files){
   ){
 
     if(
-      /<\/body>/i.test(
-        html
-      )
+      /<\/body>/i.test(html)
     ){
 
       html =
@@ -1391,7 +1468,18 @@ function combine(files){
 
 
   /* =======================================================
-     NEXORA AI FOOTER
+     CLEAN GENERATED WEBSITE
+     ======================================================= */
+
+  html =
+    cleanGeneratedHtml(html);
+
+
+  /* =======================================================
+     NEXORA FOOTER
+     
+     This is ONLY a tiny text at the actual end
+     of the generated website.
      ======================================================= */
 
   const nexoraFooter = `
@@ -1400,39 +1488,64 @@ function combine(files){
 
 #nexora-powered-by{
 
-  width:100%;
+  display:block !important;
 
-  box-sizing:border-box;
+  width:100% !important;
 
-  padding:
-    20px 24px;
+  height:auto !important;
 
-  margin-top:40px;
+  min-height:0 !important;
+
+  max-height:none !important;
+
+  box-sizing:border-box !important;
+
+  margin:0 !important;
+
+  padding:8px 14px !important;
+
+  position:static !important;
+
+  float:none !important;
+
+  clear:both !important;
+
+  border:0 !important;
+
+  background:transparent !important;
+
+  color:#777 !important;
 
   font-family:
     Arial,
     Helvetica,
-    sans-serif;
+    sans-serif !important;
 
-  font-size:11px;
+  font-size:10px !important;
 
-  line-height:1.4;
+  font-weight:400 !important;
 
-  letter-spacing:.04em;
+  line-height:1.2 !important;
 
-  color:#777;
+  letter-spacing:.02em !important;
 
-  text-align:left;
+  text-align:left !important;
 
-  background:transparent;
-
-  clear:both;
+  opacity:.8 !important;
 
 }
 
 #nexora-powered-by span{
 
-  opacity:.85;
+  display:inline !important;
+
+  margin:0 !important;
+
+  padding:0 !important;
+
+  color:inherit !important;
+
+  font:inherit !important;
 
 }
 
@@ -1448,14 +1561,13 @@ function combine(files){
 `;
 
 
-  /* =======================================================
-     Add footer to END of generated website
-     ======================================================= */
+  /*
+   * Add the branding INSIDE the generated page,
+   * immediately before </body>.
+   */
 
   if(
-    /<\/body>/i.test(
-      html
-    )
+    /<\/body>/i.test(html)
   ){
 
     html =
@@ -1478,13 +1590,6 @@ function combine(files){
 
   /* =======================================================
      RESIZE COMMUNICATION
-
-     This allows the parent host page to automatically
-     resize the iframe to the actual generated website
-     height.
-
-     This prevents the hosted website from looking like
-     a small embedded preview.
      ======================================================= */
 
   const resizeScript = `
@@ -1493,37 +1598,57 @@ function combine(files){
 
 (function(){
 
+  let lastHeight = 0;
+
+
   function sendHeight(){
 
     try{
 
+      const bodyHeight =
+        document.body
+          ? document.body.scrollHeight
+          : 0;
+
+
+      const documentHeight =
+        document.documentElement
+          ? document.documentElement.scrollHeight
+          : 0;
+
+
       const height =
         Math.max(
+          bodyHeight,
+          documentHeight
+        );
 
-          document.body
-            ? document.body.scrollHeight
-            : 0,
 
-          document.documentElement
-            ? document.documentElement.scrollHeight
-            : 0
+      if(
+        height > 0 &&
+        Math.abs(
+          height - lastHeight
+        ) > 1
+      ){
+
+        lastHeight = height;
+
+
+        window.parent.postMessage(
+
+          {
+            type:
+              'nexora-host-height',
+
+            height:
+              height
+          },
+
+          '*'
 
         );
 
-      window.parent.postMessage(
-
-        {
-          type:
-            'nexora-host-height',
-
-          height:
-            height
-
-        },
-
-        '*'
-
-      );
+      }
 
     }catch(e){}
 
@@ -1584,12 +1709,12 @@ function combine(files){
 `;
 
 
-  /* Add resize script before </body> */
+  /* =======================================================
+     ADD RESIZE SCRIPT
+     ======================================================= */
 
   if(
-    /<\/body>/i.test(
-      html
-    )
+    /<\/body>/i.test(html)
   ){
 
     html =
@@ -1622,9 +1747,7 @@ function combine(files){
 function showEmpty(){
 
   const site =
-    document.querySelector(
-      '#site'
-    );
+    document.querySelector('#site');
 
 
   site.innerHTML = `
@@ -1637,8 +1760,7 @@ function showEmpty(){
           No hosted website yet
         </b>
 
-        Generate a website in
-        Builder first.
+        Generate a website in Builder first.
 
         <br>
 
@@ -1668,9 +1790,7 @@ function showError(
 ){
 
   const site =
-    document.querySelector(
-      '#site'
-    );
+    document.querySelector('#site');
 
 
   site.innerHTML = `
@@ -1704,7 +1824,7 @@ function showError(
 
 
 /* =========================================================
-   AUTO RESIZE HOSTED WEBSITE
+   AUTO RESIZE
    ========================================================= */
 
 window.addEventListener(
@@ -1742,9 +1862,7 @@ window.addEventListener(
 
 
     const height =
-      Number(
-        data.height
-      );
+      Number(data.height);
 
 
     if(
@@ -1758,20 +1876,16 @@ window.addEventListener(
 
 
     /*
-     * Add a little extra space so the footer
-     * is never clipped.
+     * Exact generated page height.
+     * No extra artificial page/space.
      */
 
     frame.style.height =
-      Math.ceil(
-        height + 2
-      ) + 'px';
+      Math.ceil(height) + 'px';
 
 
     frame.style.minHeight =
-      Math.ceil(
-        height + 2
-      ) + 'px';
+      Math.ceil(height) + 'px';
 
   }
 
@@ -1785,9 +1899,7 @@ window.addEventListener(
 (async function(){
 
   const site =
-    document.querySelector(
-      '#site'
-    );
+    document.querySelector('#site');
 
 
   const projectName =
@@ -1809,7 +1921,7 @@ window.addEventListener(
 
 
     /* -----------------------------------------------------
-       No project
+       NO PROJECT
        ----------------------------------------------------- */
 
     if(
@@ -1821,9 +1933,7 @@ window.addEventListener(
         'Nothing hosted yet'
       );
 
-
       showEmpty();
-
 
       return;
 
@@ -1831,7 +1941,7 @@ window.addEventListener(
 
 
     /* -----------------------------------------------------
-       Project name
+       PROJECT NAME
        ----------------------------------------------------- */
 
     if(projectName){
@@ -1844,7 +1954,7 @@ window.addEventListener(
 
 
     /* -----------------------------------------------------
-       Editor link
+       EDITOR LINK
        ----------------------------------------------------- */
 
     if(editorLink){
@@ -1871,7 +1981,7 @@ window.addEventListener(
 
 
     /* -----------------------------------------------------
-       Validate HTML
+       VALIDATE HTML
        ----------------------------------------------------- */
 
     if(
@@ -1900,7 +2010,7 @@ window.addEventListener(
 
 
     /* -----------------------------------------------------
-       Status
+       STATUS
        ----------------------------------------------------- */
 
     $status(
@@ -1913,7 +2023,7 @@ window.addEventListener(
 
 
     /* -----------------------------------------------------
-       Create iframe
+       CREATE IFRAME
        ----------------------------------------------------- */
 
     const frame =
@@ -1928,19 +2038,23 @@ window.addEventListener(
 
 
     /*
-     * Keep generated website isolated.
+     * Generated website remains sandboxed.
      */
 
     frame.sandbox =
       'allow-scripts allow-forms allow-modals';
 
 
+    /*
+     * Better compatibility for external images/CDNs.
+     */
+
     frame.referrerPolicy =
-      'no-referrer';
+      'strict-origin-when-cross-origin';
 
 
     /*
-     * Put generated website inside iframe.
+     * Generated website.
      */
 
     frame.srcdoc =
@@ -1949,22 +2063,19 @@ window.addEventListener(
       );
 
 
-    /* -----------------------------------------------------
-       Initial iframe height
-       ----------------------------------------------------- */
+    /*
+     * Initial height.
+     */
 
-    if(
-      project.slug
-    ){
+    frame.style.height =
+      '100vh';
 
-      frame.style.height =
-        '100vh';
-
-    }
+    frame.style.minHeight =
+      '100vh';
 
 
     /* -----------------------------------------------------
-       Load event
+       LOAD EVENT
        ----------------------------------------------------- */
 
     frame.addEventListener(
@@ -1973,9 +2084,7 @@ window.addEventListener(
 
       function(){
 
-        if(
-          project.slug
-        ){
+        if(project.slug){
 
           $status(
             'Website is live'
@@ -1994,12 +2103,13 @@ window.addEventListener(
     );
 
 
+    /*
+     * Insert generated website.
+     */
+
     site.innerHTML = '';
 
-
-    site.append(
-      frame
-    );
+    site.append(frame);
 
 
   }catch(error){
