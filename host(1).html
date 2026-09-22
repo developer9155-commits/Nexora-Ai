@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hosted Website</title>
+<style>
+html,body{
+  width:100%;
+  min-width:0;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  background:#fff;
+}
+html{overflow-x:hidden}
+body{overflow-x:hidden}
+#app{
+  width:100%;
+  min-height:100vh;
+  margin:0;
+  padding:0;
+}
+#loading,#error{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+  text-align:center;
+  color:#222;
+  background:#fff;
+}
+#error{display:none}
+#error strong{display:block;font-size:20px;margin-bottom:8px}
+iframe{
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:100vh;
+  height:100vh;
+  margin:0;
+  padding:0;
+  border:0;
+  outline:0;
+  background:#fff;
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<div id="app">
+  <div id="loading">Loading website…</div>
+  <div id="error"><div><strong id="errorTitle">Website unavailable</strong><span id="errorMessage"></span></div></div>
+</div>
+
+<script>
+/*
+  NEXORA PUBLIC HOST
+  Important:
+  The hosted website uses the SAME combine pipeline as builder.html.
+  This prevents the hosted version from looking different from the builder preview.
+*/
+
+const firebaseReady = Boolean(
+  window.firebase &&
+  window.FIREBASE_CONFIG?.apiKey &&
+  window.FIREBASE_CONFIG?.authDomain &&
+  window.FIREBASE_CONFIG?.projectId &&
+  window.FIREBASE_CONFIG?.appId
+);
+
+if(firebaseReady && !window.firebase.apps.length){
+  window.firebase.initializeApp(window.FIREBASE_CONFIG);
+}
+
+const firestore =
+  firebaseReady && window.firebase.firestore
+    ? window.firebase.firestore()
+    : null;
+
+function showError(title,message){
+  document.getElementById('loading').style.display='none';
+  const box=document.getElementById('error');
+  box.style.display='grid';
+  document.getElementById('errorTitle').textContent=title;
+  document.getElementById('errorMessage').textContent=message||'';
+}
+
+function getSlug(){
+  return String(new URLSearchParams(location.search).get('site')||'')
+    .trim()
+    .toLowerCase();
+}
+
+async function loadProject(slug){
+  if(!firestore){
+    throw new Error('Firebase is not configured.');
+  }
+
+  if(!/^[a-z0-9][a-z0-9-]{0,39}$/.test(slug)){
+    throw new Error('Invalid website address.');
+  }
+
+  const snap=await firestore.collection('sites').doc(slug).get();
+
+  if(!snap.exists){
+    throw new Error('This website could not be found.');
+  }
+
+  const data=snap.data()||{};
+
+  if(!data.files || typeof data.files!=='object'){
+    throw new Error('This website has no valid generated files.');
+  }
+
+  return {
+    name:typeof data.name==='string'&&data.name.trim()?data.name.trim():'Hosted Website',
+    files:{
+      html:typeof data.files.html==='string'?data.files.html:'',
+      css:typeof data.files.css==='string'?data.files.css:'',
+      js:typeof data.files.js==='string'?data.files.js:''
+    }
+  };
+}
+
+/*
+  This is intentionally the same HTML/CSS/JS combination logic used by
+  builder.html. No footer, no Nexora UI, and no design wrapper is added.
+*/
+function combine(files){
+  let html=files?.html||'';
+  const css=files?.css||'';
+  const js=files?.js||'';
+
+  let cssInjected=false;
+  let jsInjected=false;
+
+  if(!/<html[\s>]/i.test(html)){
+    html='<!doctype html><html><head></head><body>'+html+'</body></html>';
+  }
+
+  /*
+    Make sure the generated page has a mobile viewport.
+    Existing viewport tags are preserved.
+  */
+  if(!/<meta[^>]+name=["']viewport["'][^>]*>/i.test(html)){
+    const viewport='<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">';
+    if(/<\/head>/i.test(html)){
+      html=html.replace(/<\/head>/i,viewport+'</head>');
+    }else{
+      html=viewport+html;
+    }
+  }
+
+  /*
+    EXACT builder.html CSS injection behavior.
+  */
+  html=html.replace(
+    /<link[^>]+style\.css[^>]*>/i,
+    ()=>{
+      cssInjected=true;
+      return '<style>\n'+css+'\n</style>';
+    }
+  );
+
+  /*
+    EXACT builder.html JS injection behavior.
+  */
+  html=html.replace(
+    /<script[^>]+src=["']script\.js["'][^>]*>\s*<\/script>/i,
+    ()=>{
+      jsInjected=true;
+      return '<script>\n'+js+'\n<\/script>';
+    }
+  );
+
+  if(!cssInjected && css){
+    if(/<\/head>/i.test(html)){
+      html=html.replace(
+        /<\/head>/i,
+        '<style>\n'+css+'\n</style></head>'
+      );
+    }else{
+      html='<style>\n'+css+'\n</style>\n'+html;
+    }
+  }
+
+  if(!jsInjected && js){
+    if(/<\/body>/i.test(html)){
+      html=html.replace(
+        /<\/body>/i,
+        '<script>\n'+js+'\n<\/script></body>'
+      );
+    }else{
+      html+='\n<script>\n'+js+'\n<\/script>';
+    }
+  }
+
+  /*
+    Small host-safe responsive normalization.
+    These rules only prevent the generated document from exceeding the
+    viewport. They do NOT replace the generated design.
+  */
+  const safety=`
+<style id="nexora-host-responsive">
+html,body{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-x:hidden;
+}
+*,*::before,*::after{box-sizing:border-box;}
+img,video,canvas,svg{max-width:100%;}
+iframe{max-width:100%;}
+</style>`;
+
+  if(/<\/head>/i.test(html)){
+    html=html.replace(/<\/head>/i,safety+'</head>');
+  }else{
+    html=safety+html;
+  }
+
+  return html;
+}
+
+function setFrameHeight(frame,height){
+  const n=Number(height);
+  if(!Number.isFinite(n)||n<=0)return;
+  frame.style.height=Math.max(window.innerHeight,Math.ceil(n+2))+'px';
+}
+
+async function start(){
+  try{
+    const slug=getSlug();
+
+    if(!slug){
+      throw new Error('No website address was provided.');
+    }
+
+    const project=await loadProject(slug);
+
+    if(!project.files.html.trim()){
+      throw new Error('The published website does not contain HTML.');
+    }
+
+    document.title=project.name;
+
+    const frame=document.createElement('iframe');
+    frame.title=project.name;
+    frame.loading='eager';
+    frame.referrerPolicy='no-referrer';
+
+    /*
+      Keep the same sandbox model as builder.html so the hosted site
+      behaves like the preview instead of getting a different execution
+      environment.
+    */
+    frame.setAttribute(
+      'sandbox',
+      'allow-scripts allow-forms allow-modals'
+    );
+
+    frame.srcdoc=combine(project.files);
+
+    frame.addEventListener('load',()=>{
+      document.getElementById('loading').remove();
+      document.getElementById('app').appendChild(frame);
+    });
+
+    window.addEventListener('message',event=>{
+      if(!event.data || event.data.type!=='nexora-host-height')return;
+      setFrameHeight(frame,event.data.height);
+    });
+
+    /*
+      Send the same resize bridge that lets long generated pages expand.
+      It is inserted into the generated document and never adds visible UI.
+    */
+    const originalSrcdoc=frame.srcdoc;
+    frame.srcdoc=originalSrcdoc.replace(
+      /<\/body>/i,
+      `<script>
+      (function(){
+        function sendHeight(){
+          try{
+            var h=Math.max(
+              document.body ? document.body.scrollHeight : 0,
+              document.documentElement ? document.documentElement.scrollHeight : 0
+            );
+            parent.postMessage({type:'nexora-host-height',height:h},'*');
+          }catch(e){}
+        }
+        window.addEventListener('load',sendHeight);
+        window.addEventListener('resize',sendHeight);
+        if(window.ResizeObserver){
+          new ResizeObserver(sendHeight).observe(document.documentElement);
+        }
+        setTimeout(sendHeight,100);
+        setTimeout(sendHeight,500);
+        setTimeout(sendHeight,1000);
+      })();
+      <\/script></body>`
+    );
+
+    /*
+      Append first, then load. This works consistently even when srcdoc
+      finishes extremely quickly.
+    */
+    document.getElementById('loading').remove();
+    document.getElementById('app').appendChild(frame);
+    frame.style.height='100vh';
+
+  }catch(error){
+    console.error('Nexora hosted website error:',error);
+    showError('Website unavailable',error?.message||'Unable to load this website.');
+  }
+}
+
+start();
+</script>
+</body>
+</html>
