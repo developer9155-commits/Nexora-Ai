@@ -23,7 +23,7 @@
 (function () {
   window.EMAILJS_CONFIG = {
     publicKey: "YOUR_EMAILJS_PUBLIC_KEY",
-    serviceId: "YOUR_EMAILJS_SERVICE_ID",
+    serviceId: "service_a5m79m8",
     templateId: "YOUR_EMAILJS_TEMPLATE_ID"
   };
 })();
