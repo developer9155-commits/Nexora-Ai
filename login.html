@@ -165,23 +165,37 @@ if (emailjsConfigured) {
   emailjs.init({ publicKey: emailjsConfig.publicKey });
 }
 
-// Sends the "account created" notification email to the new user's inbox.
-// Failures here are logged but never block sign-up.
+// Sends the Nexora AI welcome email after a new account is created.
+// The error is re-thrown so the UI and browser console clearly show when EmailJS fails.
 async function sendAccountCreatedEmail(email, name) {
   if (!emailjsConfigured) {
-    console.warn('EmailJS is not configured yet — skipping account-created email. See emailjs-config.js.');
-    return;
+    throw new Error('EmailJS is not configured. Check emailjs-config.js.');
   }
+
+  const templateParams = {
+    to_email: String(email || '').trim(),
+    to_name: String(name || 'there').trim(),
+    app_name: 'Nexora AI',
+    login_url: new URL('login.html', window.location.href).href,
+    time: new Date().toLocaleString()
+  };
+
+  console.log('Nexora AI: sending welcome email...', templateParams);
+
   try {
-    await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, {
-      to_email: email,
-      to_name: name || 'there',
-      app_name: 'Nexora AI',
-      login_url: location.origin + location.pathname.replace(/[^/]*$/, 'login.html'),
-      time: new Date().toLocaleString()
-    });
+    const response = await emailjs.send(
+      emailjsConfig.serviceId,
+      emailjsConfig.templateId,
+      templateParams
+    );
+
+    console.log('Nexora AI: welcome email sent:', response.status, response.text);
+    return response;
   } catch (error) {
-    console.warn('Account-created email failed to send:', error);
+    console.error('Nexora AI EmailJS error:', error);
+    console.error('EmailJS status:', error && error.status);
+    console.error('EmailJS message:', error && error.text);
+    throw error;
   }
 }
 
@@ -313,9 +327,29 @@ $('#authForm').onsubmit = async (event) => {
       }
       const credential = await auth.createUserWithEmailAndPassword(email, password);
       await credential.user.updateProfile({ displayName: name });
-      await saveUserProfile(credential.user);
       await credential.user.sendEmailVerification();
-      sendAccountCreatedEmail(email, name);
+
+      // Save the profile separately so a Firestore rules/network issue does not
+      // prevent the welcome email from being sent.
+      try {
+        await saveUserProfile(credential.user);
+      } catch (profileError) {
+        console.error('Firestore profile save failed:', profileError);
+      }
+
+      try {
+        await sendAccountCreatedEmail(email, name);
+      } catch (emailError) {
+        console.error('Welcome email failed:', emailError);
+        setMessage(
+          'Account created, but the welcome email could not be sent. Check the browser console.',
+          false
+        );
+        try { await auth.signOut(); } catch (error) { console.warn('Logout after sign-up failed:', error); }
+        clearSession();
+        return;
+      }
+
       setMessage(
         isAdminEmail(email)
           ? 'Admin account created. Verify your email, then sign in to open the admin dashboard.'
@@ -352,9 +386,18 @@ $('#googleSignIn').onclick = async () => {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const result = await auth.signInWithPopup(provider);
     const email = String(result.user.email || '').toLowerCase();
-    await saveUserProfile(result.user);
+    try {
+      await saveUserProfile(result.user);
+    } catch (profileError) {
+      console.error('Firestore profile save failed:', profileError);
+    }
+
     if (result.additionalUserInfo && result.additionalUserInfo.isNewUser) {
-      sendAccountCreatedEmail(email, result.user.displayName);
+      try {
+        await sendAccountCreatedEmail(email, result.user.displayName);
+      } catch (emailError) {
+        console.error('Google signup welcome email failed:', emailError);
+      }
     }
     setSession(result.user);
     setMessage('Signed in with Google. Opening your workspace...', true);
