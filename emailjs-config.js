@@ -22,8 +22,8 @@
 */
 (function () {
   window.EMAILJS_CONFIG = {
-    publicKey: "YOUR_EMAILJS_PUBLIC_KEY",
+    publicKey: "Z4rKsloYbjrqkbfYh",
     serviceId: "service_a5m79m8",
-    templateId: "YOUR_EMAILJS_TEMPLATE_ID"
+    templateId: "template_oitpqh7"
   };
 })();
