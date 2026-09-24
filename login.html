@@ -10,6 +10,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="emailjs-config.js"></script>
 <style>
  :root{--bg:#050505;--s1:#0d0d0d;--s2:#161616;--s3:#1f1f1f;--ln:rgba(255,255,255,.11);--ln2:rgba(255,255,255,.24);--tx:#f4f4f4;--mu:#9b9b9b;--dim:#686868;--head:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;--body:'Hanken Grotesk','Helvetica Neue',Arial,sans-serif;--ok:#62d99c;--bad:#ff8e8e}
 *{box-sizing:border-box;margin:0;padding:0}html,body{min-height:100%;font-family:var(--body);overflow-x:hidden}body{background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;font-variant-caps:small-caps;letter-spacing:.02em;-webkit-font-smoothing:antialiased;max-width:100vw}button,input{font:inherit;color:inherit;letter-spacing:inherit}button{border:0;background:none;cursor:pointer}a{color:inherit;text-decoration:none}.top{height:62px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1px solid var(--ln);background:rgba(13,13,13,.9)}.logo{display:flex;align-items:center;gap:9px;font:700 16px var(--head);letter-spacing:0}.logo svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.5}.sp{flex:1}.back{color:var(--mu);font-size:12px}.back:hover{color:#fff}.page{min-height:calc(100vh - 62px);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(380px,.95fr);align-items:center;gap:7vw;max-width:1180px;margin:auto;padding:60px 42px;position:relative;overflow:hidden}.page:before,.page:after{content:'';position:absolute;pointer-events:none;border:1px solid rgba(255,255,255,.08);transform:rotate(45deg)}.page:before{width:360px;height:360px;left:-210px;top:18%;border-radius:42px}.page:after{width:230px;height:230px;right:-120px;bottom:8%;border-radius:34px}.card{grid-column:2;max-width:520px;width:min(100%,520px);margin:0 auto;padding:26px;border:1px solid var(--ln2);border-radius:22px;background:linear-gradient(180deg,var(--s2),var(--s1));box-shadow:0 32px 60px rgba(0,0,0,.5)}
@@ -152,6 +154,35 @@ function isAdminEmail(email) {
   return String(email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
+const emailjsConfig = window.EMAILJS_CONFIG || {};
+const emailjsConfigured = Boolean(
+  window.emailjs &&
+  emailjsConfig.publicKey && !emailjsConfig.publicKey.startsWith('YOUR_') &&
+  emailjsConfig.serviceId && !emailjsConfig.serviceId.startsWith('YOUR_') &&
+  emailjsConfig.templateId && !emailjsConfig.templateId.startsWith('YOUR_')
+);
+if (emailjsConfigured) {
+  emailjs.init({ publicKey: emailjsConfig.publicKey });
+}
+
+// Sends the "account created" notification email to the new user's inbox.
+// Failures here are logged but never block sign-up.
+async function sendAccountCreatedEmail(email, name) {
+  if (!emailjsConfigured) {
+    console.warn('EmailJS is not configured yet — skipping account-created email. See emailjs-config.js.');
+    return;
+  }
+  try {
+    await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, {
+      to_email: email,
+      to_name: name || 'there',
+      app_name: 'Nexora AI'
+    });
+  } catch (error) {
+    console.warn('Account-created email failed to send:', error);
+  }
+}
+
 function setSession(user) {
   const email = String(user.email || $('#email').value || '').trim().toLowerCase();
   const name = user.displayName || $('#name').value.trim() || 'User';
@@ -282,6 +313,7 @@ $('#authForm').onsubmit = async (event) => {
       await credential.user.updateProfile({ displayName: name });
       await saveUserProfile(credential.user);
       await credential.user.sendEmailVerification();
+      sendAccountCreatedEmail(email, name);
       setMessage(
         isAdminEmail(email)
           ? 'Admin account created. Verify your email, then sign in to open the admin dashboard.'
@@ -319,6 +351,9 @@ $('#googleSignIn').onclick = async () => {
     const result = await auth.signInWithPopup(provider);
     const email = String(result.user.email || '').toLowerCase();
     await saveUserProfile(result.user);
+    if (result.additionalUserInfo && result.additionalUserInfo.isNewUser) {
+      sendAccountCreatedEmail(email, result.user.displayName);
+    }
     setSession(result.user);
     setMessage('Signed in with Google. Opening your workspace...', true);
     setTimeout(() => redirectAfterAuth(email), 450);
