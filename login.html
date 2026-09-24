@@ -176,7 +176,9 @@ async function sendAccountCreatedEmail(email, name) {
     await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, {
       to_email: email,
       to_name: name || 'there',
-      app_name: 'Nexora AI'
+      app_name: 'Nexora AI',
+      login_url: location.origin + location.pathname.replace(/[^/]*$/, 'login.html'),
+      time: new Date().toLocaleString()
     });
   } catch (error) {
     console.warn('Account-created email failed to send:', error);
